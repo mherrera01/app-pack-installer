@@ -32,6 +32,10 @@
     InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
   !endif
 
+  ; Get installation folder from the machine registry
+  ; If available, the default path is overriden (for update purposes)
+  InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "Path"
+
   ; Request admin privileges for not having problems with the third-party
   ; application setups
   RequestExecutionLevel admin
@@ -75,6 +79,31 @@
   !insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
+; Callback functions
+
+Function .onInit
+
+  ; Clear the error flag as it may be set in ReadRegStr
+  ClearErrors
+
+  ; Check if there is installer info in the machine registry
+  ReadRegStr $0 HKLM "Software\${PRODUCT_NAME}" "Version"
+
+  ; Continue for a normal installation
+  IfErrors continue
+
+  ; Ask the user for updating
+  MessageBox MB_YESNO|MB_ICONQUESTION "${PRODUCT_NAME} version $0 is already \
+    installed on your machine.$\nWould you like to update to version ${PRODUCT_VERSION}?" \
+    IDYES continue
+  
+  ; Close the installer if the MessageBox returns NO
+  Quit
+
+continue:
+FunctionEnd
+
+;--------------------------------
 ; Installer sections
 
 Section "WiX v3 Toolset" WiXv3
@@ -95,7 +124,7 @@ Section "WiX v3 Toolset" WiXv3
 SectionEnd
 
 ;--------------------------------
-; Section Descriptions
+; Section descriptions
 
   ; Language strings
   LangString DESC_WiXv3 ${LANG_ENGLISH} "The WiX toolset lets developers \
