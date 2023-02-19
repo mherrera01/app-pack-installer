@@ -133,6 +133,8 @@ Section "${PRODUCT_NAME} (required)" SEC_Installer
   WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayName" "${PRODUCT_NAME}"
   WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
   WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayIcon" '"$INSTDIR\Icon.ico"'
+  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "Publisher" "Miguel Herrera"
+  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayVersion" "${PRODUCT_VERSION}"
 
   ; NoModify and NoRepair set to 1 removes the possibility to modify
   ; and repair from the control panel
