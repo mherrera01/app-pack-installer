@@ -55,6 +55,8 @@
   ; Show a message to the user when the installer is closed
   !define MUI_ABORTWARNING
 
+  !define MUI_ICON ".\InstIcon.ico"
+
 ;--------------------------------
 ; Pages
 
@@ -82,8 +84,10 @@ Section "WiX v3 Toolset" WiXv3
   ; Add the setup executable
   File "Apps\wix311.exe"
   
-  ; Store installation folder in the registry
-  WriteRegStr HKCU "Software\${PRODUCT_NAME}" "" $INSTDIR
+  ; Store installation folder and version in the machine registry
+  ; The keys are stored under the WOW6432Node directory (32 bits)
+  WriteRegStr HKLM "Software\${PRODUCT_NAME}" "Path" $INSTDIR
+  WriteRegStr HKLM "Software\${PRODUCT_NAME}" "Version" ${PRODUCT_VERSION}
   
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -113,7 +117,7 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 
-  ; Delete the registry
-  DeleteRegKey HKCU "Software\${PRODUCT_NAME}"
+  ; Delete the installer info of the machine registry
+  DeleteRegKey HKLM "Software\${PRODUCT_NAME}"
 
 SectionEnd
