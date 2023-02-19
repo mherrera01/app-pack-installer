@@ -106,12 +106,15 @@ FunctionEnd
 ;--------------------------------
 ; Installer sections
 
-Section "WiX v3 Toolset" WiXv3
+Section "${PRODUCT_NAME}" SEC_Installer
 
+  ; The installer data must be installed. Read-only section
+  SectionIn RO
   SetOutPath "$INSTDIR"
 
-  ; Add the setup executable
-  File "Apps\wix311.exe"
+  ; Add the license and readme of the installer
+  File ".\LICENSE"
+  File ".\README.md"
   
   ; Store installation folder and version in the machine registry
   ; The keys are stored under the WOW6432Node directory (32 bits)
@@ -123,22 +126,40 @@ Section "WiX v3 Toolset" WiXv3
 
 SectionEnd
 
+SectionGroup "IT"
+
+Section "WiX v3 Toolset" SEC_WiXv3
+
+  SetOutPath "$INSTDIR"
+
+  ; Add the setup executable
+  File ".\Apps\wix311.exe"
+
+SectionEnd
+
+SectionGroupEnd
+
 ;--------------------------------
 ; Section descriptions
 
   ; Language strings
+  LangString DESC_Installer ${LANG_ENGLISH} "The installer data."
   LangString DESC_WiXv3 ${LANG_ENGLISH} "The WiX toolset lets developers \
     create installers for Windows."
 
   ; Assign each language string to the corresponding sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${WiXv3} $(DESC_WiXv3)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_Installer} $(DESC_Installer)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_WiXv3} $(DESC_WiXv3)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;--------------------------------
 ; Uninstaller section
 
 Section "Uninstall"
+
+  Delete "$INSTDIR\LICENSE"
+  Delete "$INSTDIR\README.md"
 
   ; Delete all the app setups
   Delete "$INSTDIR\wix311.exe"
