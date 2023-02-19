@@ -9,13 +9,16 @@
 ;--------------------------------
 ; Defines
 
-  ; 1 for installing the apps in the \TestInstallDir folder
+  ; 1 for installing in the \TestInstallDir folder
   ; 0 for a production environment
   !define TEST 1
   !define PRODUCT_NAME "AppPack"
 
   ; The product version must be numerical with the format X.X.X.X
   !define PRODUCT_VERSION 1.0.0.0
+
+  ; Directory where the uninstalling registry keys are stored
+  !define UN_REGISTRY_DIR "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
 ;--------------------------------
 ; General
@@ -56,10 +59,10 @@
 ;--------------------------------
 ; Interface settings
 
-  ; Show a message to the user when the installer is closed
+  ; Show a message to the user when the installer is aborted
   !define MUI_ABORTWARNING
 
-  !define MUI_ICON ".\InstIcon.ico"
+  !define MUI_ICON ".\Icon.ico"
 
 ;--------------------------------
 ; Pages
@@ -106,21 +109,34 @@ FunctionEnd
 ;--------------------------------
 ; Installer sections
 
-Section "${PRODUCT_NAME}" SEC_Installer
+Section "${PRODUCT_NAME} (required)" SEC_Installer
 
   ; The installer data must be installed. Read-only section
   SectionIn RO
   SetOutPath "$INSTDIR"
 
-  ; Add the license and readme of the installer
+  ; Add the license, readme and icon of the installer
   File ".\LICENSE"
   File ".\README.md"
+  File ".\Icon.ico"
   
+  ;--------------------------------
+  ; The registry keys are stored under the WOW6432Node directory (32 bits)
+
   ; Store installation folder and version in the machine registry
-  ; The keys are stored under the WOW6432Node directory (32 bits)
   WriteRegStr HKLM "Software\${PRODUCT_NAME}" "Path" $INSTDIR
   WriteRegStr HKLM "Software\${PRODUCT_NAME}" "Version" ${PRODUCT_VERSION}
   
+  ; Create registry keys in the local machine for uninstalling
+  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayName" "${PRODUCT_NAME}"
+  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
+  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayIcon" '"$INSTDIR\Icon.ico"'
+
+  ; NoModify and NoRepair set to 1 removes the possibility to modify
+  ; and repair from the control panel
+  WriteRegDWORD HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "NoModify" 1
+  WriteRegDWORD HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "NoRepair" 1
+
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -158,16 +174,21 @@ SectionGroupEnd
 
 Section "Uninstall"
 
-  Delete "$INSTDIR\LICENSE"
-  Delete "$INSTDIR\README.md"
-
-  ; Delete all the app setups
+  ; Delete all the app setups, if installed
   Delete "$INSTDIR\wix311.exe"
 
+  ; Delete common files and the uninstaller
+  Delete "$INSTDIR\LICENSE"
+  Delete "$INSTDIR\README.md"
+  Delete "$INSTDIR\Icon.ico"
   Delete "$INSTDIR\Uninstall.exe"
+  
+  ; Remove the installation folder
+  ; Never use the /r paramater as it is unsafe
   RMDir "$INSTDIR"
 
-  ; Delete the installer info of the machine registry
+  ; Delete the registry keys in the local machine
+  DeleteRegKey HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}"
   DeleteRegKey HKLM "Software\${PRODUCT_NAME}"
 
 SectionEnd
