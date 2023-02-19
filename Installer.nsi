@@ -62,7 +62,9 @@
   ; Show a message to the user when the installer is aborted
   !define MUI_ABORTWARNING
 
+  ; Display customized icon
   !define MUI_ICON ".\Icon.ico"
+  !define MUI_UNICON ".\Icon.ico"
 
 ;--------------------------------
 ; Pages
