@@ -14,8 +14,8 @@
   !define TEST 1
   !define PRODUCT_NAME "AppPack"
 
-  ; The product version must be numerical with the format X.X.X.X
-  !define PRODUCT_VERSION 1.0.0.0
+  ; The product version must be numerical with the format X.X.X
+  !define PRODUCT_VERSION 1.0.0
 
   ; Directory where the uninstalling registry keys are stored
   !define UN_REGISTRY_DIR "Software\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -47,7 +47,8 @@
 ; Installer version info
 
   ; Necessary for including VIAddVersionKey
-  VIProductVersion "${PRODUCT_VERSION}"
+  ; The value must be numerical with the format X.X.X.X
+  VIProductVersion "${PRODUCT_VERSION}.0"
 
   ; Info displayed in the Details tab of the installer properties
   VIAddVersionKey ProductName "${PRODUCT_NAME}"
