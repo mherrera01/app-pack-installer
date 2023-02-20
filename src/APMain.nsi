@@ -92,73 +92,45 @@
 ;--------------------------------
 ; Callback functions
 
-Function .onInit
+  Function .onInit
 
-  ; Clear the error flag as it may be set in ReadRegStr
-  ClearErrors
+    ; Clear the error flag as it may be set in ReadRegStr
+    ClearErrors
 
-  ; Check if there is installer info in the machine registry
-  ReadRegStr $0 HKLM "Software\${PRODUCT_NAME}" "Version"
+    ; Check if there is installer info in the machine registry
+    ReadRegStr $0 HKLM "Software\${PRODUCT_NAME}" "Version"
 
-  ; Continue for a normal installation
-  IfErrors continue
+    ; Continue for a normal installation
+    IfErrors continue
 
-  ; Ask the user for updating
-  MessageBox MB_YESNO|MB_ICONQUESTION "${PRODUCT_NAME} version $0 is already \
-    installed on your machine.$\nWould you like to update to version ${PRODUCT_VERSION}?" \
-    IDYES continue
-  
-  ; Close the installer if the MessageBox returns NO
-  Quit
+    ; Ask the user for updating
+    MessageBox MB_YESNO|MB_ICONQUESTION "${PRODUCT_NAME} version $0 is already \
+      installed on your machine.$\nWould you like to update to version ${PRODUCT_VERSION}?" \
+      IDYES continue
+    
+    ; Close the installer if the MessageBox returns NO
+    Quit
 
-continue:
-FunctionEnd
-
-;--------------------------------
-; Installer sections
-
-!insertmacro AP_INSERT_INSTALLER_SECTION
-
-SectionGroup "IT"
-
-  !insertmacro AP_INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
-
-SectionGroupEnd
+  continue:
+  FunctionEnd
 
 ;--------------------------------
-; Section descriptions
+; Sections
 
-  ; Language strings
-  LangString DESC_Installer ${LANG_ENGLISH} "The installer data."
-  LangString DESC_WiXv3 ${LANG_ENGLISH} "The WiX toolset lets developers \
-    create installers for Windows."
+  ; The common files and the uninstaller are installed by default
+  !insertmacro AP_INSERT_INSTALLER_SECTION
 
-  ; Assign each language string to the corresponding sections
-  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_Installer} $(DESC_Installer)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_WiXv3} $(DESC_WiXv3)
-  !insertmacro MUI_FUNCTION_DESCRIPTION_END
+  ;--------------------------------
+  ; Optional apps to install, divided by groups
 
-;--------------------------------
-; Uninstaller section
+    SectionGroup "IT"
 
-Section "Uninstall"
+      !insertmacro AP_INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
 
-  ; Delete all the app setups, if installed
-  Delete "$INSTDIR\wix311.exe"
+    SectionGroupEnd
 
-  ; Delete common files and the uninstaller
-  Delete "$INSTDIR\LICENSE"
-  Delete "$INSTDIR\README.md"
-  Delete "$INSTDIR\Icon.ico"
-  Delete "$INSTDIR\Uninstall.exe"
-  
-  ; Remove the installation folder
-  ; Never use the /r paramater as it is unsafe
-  RMDir "$INSTDIR"
+  ; The section descriptions are set for displaying info text in the MUI Components page
+  !insertmacro AP_SET_SECTION_DESC
 
-  ; Delete the registry keys in the local machine
-  DeleteRegKey HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}"
-  DeleteRegKey HKLM "Software\${PRODUCT_NAME}"
-
-SectionEnd
+  ; Uninstall section
+  !insertmacro AP_INSERT_UNINSTALL_SECTION

@@ -57,3 +57,43 @@
   SectionEnd
 
 !macroend
+
+!macro AP_SET_SECTION_DESC
+
+  ; Language strings
+  LangString DESC_Installer ${LANG_ENGLISH} "The installer data."
+  LangString DESC_WiXv3 ${LANG_ENGLISH} "The WiX toolset lets developers \
+    create installers for Windows."
+
+  ; Assign each language string to the corresponding sections
+  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_Installer} $(DESC_Installer)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_WiXv3} $(DESC_WiXv3)
+  !insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+!macroend
+
+!macro AP_INSERT_UNINSTALL_SECTION
+
+  Section "Uninstall"
+
+    ; Delete all the app setups, if installed
+    Delete "$INSTDIR\wix311.exe"
+
+    ; Delete common files and the uninstaller
+    Delete "$INSTDIR\LICENSE"
+    Delete "$INSTDIR\README.md"
+    Delete "$INSTDIR\Icon.ico"
+    Delete "$INSTDIR\Uninstall.exe"
+    
+    ; Remove the installation folder
+    ; Never use the /r paramater as it is unsafe
+    RMDir "$INSTDIR"
+
+    ; Delete the registry keys in the local machine
+    DeleteRegKey HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}"
+    DeleteRegKey HKLM "Software\${PRODUCT_NAME}"
+
+  SectionEnd
+
+!macroend
