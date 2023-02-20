@@ -9,6 +9,8 @@
 
   !include "APSections.nsh"
   !include "MUI2.nsh"
+  !include "nsDialogs.nsh"
+  !include "LogicLib.nsh"
 
 ;--------------------------------
 ; Defines
@@ -78,6 +80,7 @@
   !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
+  Page custom downloadPage /ENABLECANCEL
   !insertmacro MUI_PAGE_INSTFILES
   
   !insertmacro MUI_UNPAGE_WELCOME
@@ -112,6 +115,25 @@
     Quit
 
   continue:
+  FunctionEnd
+
+;--------------------------------
+; Functions
+
+  Function downloadPage
+
+    !insertmacro MUI_HEADER_TEXT "Apps Download" "Download from the internet the \
+      different applications. This may take a while."
+
+    nsDialogs::Create 1018
+    Pop $0
+
+    ${If} $0 == error
+      Abort
+    ${EndIf}
+
+    nsDialogs::Show
+
   FunctionEnd
 
 ;--------------------------------
