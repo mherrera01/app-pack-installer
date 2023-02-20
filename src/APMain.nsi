@@ -132,6 +132,24 @@
       Abort
     ${EndIf}
 
+    ; Clear the error flag as it is set by the nsJSON functions
+    ClearErrors
+
+    ; Load the json file in which the info about the apps is stored
+    nsJSON::Set /file "$EXEDIR\Apps.json"
+    IfErrors continue
+
+    ; Get the value from apps[0] -> setupURL
+    ; The parameter /end must be included to prevent stack corruption
+    nsJSON::Get "apps" /index 0 "setupURL" /end
+    IfErrors continue
+    Pop $0
+
+    ; Display the value from the JSON file
+    ${NSD_CreateLabel} 1u 26u 100% 100% "SetupURL: $0"
+    Pop $0
+
+  continue:
     nsDialogs::Show
 
   FunctionEnd

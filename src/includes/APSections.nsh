@@ -52,7 +52,8 @@
     SetOutPath "$INSTDIR"
 
     ; Download the setup executable
-    NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" "$INSTDIR\wix311.exe" /TIMEOUT 1m /CANCEL /RESUME /END
+    NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" \
+      "$INSTDIR\Apps\wix311.exe" /TIMEOUT 1m /RESUME /END
 
   SectionEnd
 
@@ -78,7 +79,10 @@
   Section "Uninstall"
 
     ; Delete all the app setups, if installed
-    Delete "$INSTDIR\wix311.exe"
+    Delete "$INSTDIR\Apps\wix311.exe"
+
+    ; Remove the apps folder
+    RMDir "$INSTDIR\Apps"
 
     ; Delete common files and the uninstaller
     Delete "$INSTDIR\LICENSE"
