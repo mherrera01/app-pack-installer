@@ -5,6 +5,7 @@
 ; Includes
 
   !include "MUI2.nsh"
+  !include "Macros.nsh"
 
 ;--------------------------------
 ; Defines
@@ -149,16 +150,7 @@ SectionEnd
 
 SectionGroup "IT"
 
-Section "WiX v3 Toolset" SEC_WiXv3
-
-  SetOutPath "$INSTDIR"
-
-  ; Download the setup executable
-  NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" "$INSTDIR\wix311.exe" /TIMEOUT 1m /CANCEL /RESUME /END
-
-  ; 
-
-SectionEnd
+!insertmacro INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
 
 SectionGroupEnd
 
