@@ -1,11 +1,14 @@
-; File: Installer.nsi
+; File: APMain.nsi
 ; Author: Miguel Herrera
 
 ;--------------------------------
 ; Includes
 
+  ; User-defined NSH files
+  !addincludedir ".\includes"
+
+  !include "APSections.nsh"
   !include "MUI2.nsh"
-  !include "Macros.nsh"
 
 ;--------------------------------
 ; Defines
@@ -77,6 +80,7 @@
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
   
+  !insertmacro MUI_UNPAGE_WELCOME
   !insertmacro MUI_UNPAGE_CONFIRM
   !insertmacro MUI_UNPAGE_INSTFILES
   
@@ -113,44 +117,11 @@ FunctionEnd
 ;--------------------------------
 ; Installer sections
 
-Section "${PRODUCT_NAME} (required)" SEC_Installer
-
-  ; The installer data must be installed. Read-only section
-  SectionIn RO
-  SetOutPath "$INSTDIR"
-
-  ; Add the license, readme and icon of the installer
-  File "..\LICENSE"
-  File "..\README.md"
-  File "..\Icon.ico"
-  
-  ;--------------------------------
-  ; The registry keys are stored under the WOW6432Node directory (32 bits)
-
-  ; Store installation folder and version in the machine registry
-  WriteRegStr HKLM "Software\${PRODUCT_NAME}" "Path" $INSTDIR
-  WriteRegStr HKLM "Software\${PRODUCT_NAME}" "Version" ${PRODUCT_VERSION}
-  
-  ; Create registry keys in the local machine for uninstalling
-  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayName" "${PRODUCT_NAME}"
-  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayIcon" '"$INSTDIR\Icon.ico"'
-  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "Publisher" "Miguel Herrera"
-  WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayVersion" "${PRODUCT_VERSION}"
-
-  ; NoModify and NoRepair set to 1 removes the possibility to modify
-  ; and repair from the control panel
-  WriteRegDWORD HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "NoModify" 1
-  WriteRegDWORD HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "NoRepair" 1
-
-  ; Create uninstaller
-  WriteUninstaller "$INSTDIR\Uninstall.exe"
-
-SectionEnd
+!insertmacro AP_INSERT_INSTALLER_SECTION
 
 SectionGroup "IT"
 
-!insertmacro INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
+  !insertmacro AP_INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
 
 SectionGroupEnd
 
