@@ -26,6 +26,9 @@
   ; Directory where the uninstalling registry keys are stored
   !define UN_REGISTRY_DIR "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
+  ; Link where the template JSON file is located
+  !define TEMPLATE_JSON_LINK "https://raw.githubusercontent.com/mherrera01/app-pack-installer/develop/appBundles/Template.json"
+
 ;--------------------------------
 ; General
 
@@ -195,9 +198,19 @@
 
   Function onDownloadTemplate
 
+  downloadTemplate:
     ; Download the JSON template file
-    ;NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" \
-    ;  "$INSTDIR\Apps\wix311.exe" /TIMEOUT 1m /RESUME /END
+    NScurl::http GET "${TEMPLATE_JSON_LINK}" \
+      "$EXEDIR\Template.json" /TIMEOUT 1m /POPUP /END
+    Pop $0
+
+    ${If} $0 == "OK"
+      MessageBox MB_OK "Template downloaded successfully."
+    ${Else}
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+        "$0$\nCheck your internet connection." \
+        IDRETRY downloadTemplate
+    ${EndIf}
 
   FunctionEnd
 

@@ -53,7 +53,7 @@
 
     ; Download the setup executable
     NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" \
-      "$INSTDIR\Apps\wix311.exe" /TIMEOUT 1m /RESUME /END
+      "$INSTDIR\Apps\wix311.exe" /TIMEOUT 1m /END
 
   SectionEnd
 
