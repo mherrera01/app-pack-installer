@@ -14,7 +14,7 @@
     SectionIn RO
     SetOutPath "$INSTDIR"
 
-    ; Add the license, readme and icon of the installer
+    ; Add the common files of the installer
     File "..\LICENSE"
     File "..\README.md"
     File "..\Icon.ico"
