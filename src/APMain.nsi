@@ -87,6 +87,7 @@
   ; nsDialogs variables for the customizeAppPack page
   Var dialog
   Var textJsonFile
+  Var saveTemplateDir
 
 ;--------------------------------
 ; Pages
@@ -144,7 +145,7 @@
     nsDialogs::Create 1018
     Pop $dialog
 
-    ${If} $dialog == error
+    ${If} $dialog == "error"
       Abort
     ${EndIf}
 
@@ -166,9 +167,12 @@
     ; Pop $0
 
     ; ${NSD_Create*} x y width height text
-    ; To center an element 100 - (width + x) = % margin
+    ; To center a component: 100 - (width + x) = % margin
     ${NSD_CreateHLine} 5% 10u 90% 34u ""
     Pop $0
+
+    ;--------------------------------
+    ; UI for a customized app bundle
 
     ${NSD_CreateGroupBox} 5% 30% 90% 55% "Customized App Bundle"
     Pop $0
@@ -198,28 +202,44 @@
 
   Function onDownloadTemplate
 
-  downloadTemplate:
-    ; Download the JSON template file
-    NScurl::http GET "${TEMPLATE_JSON_LINK}" \
-      "$EXEDIR\Template.json" /TIMEOUT 1m /POPUP /END
-    Pop $0
+    ; Open a window to select the folder where the template will be saved
+    nsDialogs::SelectFolderDialog "Select a folder to save the template \
+      JSON file." "$EXEDIR\"
+    Pop $saveTemplateDir
 
-    ${If} $0 == "OK"
-      MessageBox MB_OK "Template downloaded successfully."
-    ${Else}
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
-        "$0$\nCheck your internet connection." \
-        IDRETRY downloadTemplate
+    ; Exit the function if the user cancels the operation or an error ocurrs
+    ${If} $saveTemplateDir == "error"
+      Goto saveDirError
     ${EndIf}
 
+    downloadTemplate:
+
+      ; Download the JSON template file
+      NScurl::http GET "${TEMPLATE_JSON_LINK}" \
+        "$saveTemplateDir\Template.json" /TIMEOUT 1m /POPUP /END
+      Pop $0
+
+      ${If} $0 == "OK"
+        MessageBox MB_OK "Template downloaded successfully."
+      ${Else}
+        ; Allow the user to retry the download
+        MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+          "$0$\nCheck your internet connection." \
+          IDRETRY downloadTemplate
+      ${EndIf}
+
+  saveDirError:
   FunctionEnd
 
   Function onJsonBrowse
 
+    ; Get the directory from the UI component
     ${NSD_GetText} $textJsonFile $0
+
+    ; Open a window to select a JSON file
     nsDialogs::SelectFileDialog open "$0" ".json files|*.json"
     Pop $0
-    ${If} $0 != error
+    ${If} $0 != "error"
       ${NSD_SetText} $textJsonFile "$0"
     ${EndIf}
 
