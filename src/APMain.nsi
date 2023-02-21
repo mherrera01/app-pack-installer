@@ -72,16 +72,16 @@
 ; Graphical interface
 
   ; Set UI custom settings
-  !insertmacro AP_INSERT_UI_SETTINGS
+  !insertmacro AP_SET_UI_SETTINGS
 
   ; Insert the UI (built-in and custom) pages
   !insertmacro AP_INSERT_UI_PAGES
 
   ; Set the UI languages
-  !insertmacro AP_INSERT_UI_LANGUAGES
+  !insertmacro AP_SET_UI_LANGUAGES
 
   ; Define the parameters and functions for the custom pages
-  !insertmacro AP_INSERT_UI_CUSTOMIZE_PACK_PAGE
+  !insertmacro AP_INSERT_UI_CHOOSE_BUNDLE_PAGE
 
 ;--------------------------------
 ; Callback functions
