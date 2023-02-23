@@ -28,8 +28,9 @@
   ; Directory where the uninstalling registry keys are stored
   !define UN_REGISTRY_DIR "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
-  ; Link where the template JSON file is located
+  ; Links where the app bundles are located
   !define TEMPLATE_JSON_LINK "https://raw.githubusercontent.com/mherrera01/app-pack-installer/develop/appBundles/Template.json"
+  !define DEFAULT_BUNDLE_JSON_LINK "https://raw.githubusercontent.com/mherrera01/app-pack-installer/develop/appBundles/Apps.json"
 
 ;--------------------------------
 ; General
@@ -81,7 +82,8 @@
   !insertmacro AP_SET_UI_LANGUAGES
 
   ; Define the parameters and functions for the custom pages
-  !insertmacro AP_INSERT_UI_CHOOSE_BUNDLE_PAGE
+  !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
+  !insertmacro AP_DEFINE_UI_VALIDATE_BUNDLE_PAGE
 
 ;--------------------------------
 ; Callback functions
@@ -106,7 +108,34 @@
     ; Close the installer if the MessageBox returns NO
     Quit
 
-  continueInst:
+    continueInst:
+
+      ; Initialize the $PLUGINSDIR keyword which points to %temp%\nsxXXXX.tmp\
+      ; Required for storing temporal files created by the installer
+      InitPluginsDir
+
+  FunctionEnd
+
+  ; Last function called when the installer is closed
+  Function .onGuIEnd
+
+    ; The Nscurl plugin must be unloaded so that the NScurl.dll file
+    ; can be removed from the %temp% folder.
+
+    ; Get the NScurl module handle.
+    ; The 't' prefix indicates that the module name is null-terminated.
+    ; A paramater is needed to get the GetModuleHandle return value:
+    ; (i . s) consists of type (i = integer), source (. = ignored) and
+    ; destination (s = stack).
+    System::Call "kernel32::GetModuleHandle(t 'NScurl.dll') i .s"
+    Pop $0
+
+    ${If} $0 != 0
+      ; Free the Nscurl module
+      System::Call "kernel32::FreeLibrary(i $0) i .s"
+      Pop $0
+    ${EndIf}
+
   FunctionEnd
 
 ;--------------------------------
