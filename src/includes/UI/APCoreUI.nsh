@@ -34,7 +34,7 @@
   !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
   ; Custom pages
-  Page custom chooseBundlePage /ENABLECANCEL
+  Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
   Page custom validateBundlePage validateBundlePageLeave /ENABLECANCEL
 
   !insertmacro MUI_PAGE_COMPONENTS

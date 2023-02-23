@@ -114,6 +114,9 @@
       ; Required for storing temporal files created by the installer
       InitPluginsDir
 
+      ; Set the default values of the custom pages
+      Call setDefaultUIValuesCBP
+
   FunctionEnd
 
   ; Last function called when the installer is closed

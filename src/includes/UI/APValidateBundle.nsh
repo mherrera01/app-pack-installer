@@ -119,6 +119,9 @@
         Push 1
         Call toggleBackNextButtons
 
+        ; Update the download status to 'Completed'
+        ${NSD_SetText} $downloadStatusInfoVBP "Completed"
+
         ${NSD_KillTimer} onProgressDefBundle
       ${EndIf}
 

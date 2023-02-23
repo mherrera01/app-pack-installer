@@ -7,6 +7,8 @@
   ; CBP (Choose Bundle Page) variables
 
     Var dialogCBP
+    Var defaultBundleButtonCBP
+    Var customBundleButtonCBP
     Var radioButtonDescCBP
 
     ; Customized app bundle UI handlers
@@ -18,8 +20,24 @@
 
     Var saveTemplateDirCBP
 
+    ; Variables to keep the UI state
+    Var defaultBundleButtonStateCBP
+    Var customBundleButtonStateCBP
+    Var jsonFileInputStateCBP
+
   ;--------------------------------
-  ; Main function that creates the custom page
+  ; Function that set the default UI values
+
+    Function setDefaultUIValuesCBP
+
+      StrCpy $defaultBundleButtonStateCBP ${BST_CHECKED}
+      StrCpy $customBundleButtonStateCBP ${BST_UNCHECKED}
+      StrCpy $jsonFileInputStateCBP ""
+
+    FunctionEnd
+
+  ;--------------------------------
+  ; Main functions triggered on custom page creation and disposal
 
     Function chooseBundlePage
 
@@ -41,19 +59,17 @@
 
         ; Default bundle, which downloads the JSON file from the internet
         ${NSD_CreateFirstRadioButton} 5% 1% 40% 12u "Default bundle (recommended)"
-        Pop $0
+        Pop $defaultBundleButtonCBP
 
-        ; Data associated to the radio button handler, that will be
-        ; then retrieved by GetUserData
-        nsDialogs::SetUserData $0 "DefaultButton"
-        ${NSD_OnClick} $0 onRadioClick
-        SendMessage $0 ${BM_CLICK} "" "" ; Select radio button
+        ; Select default radio button
+        ${NSD_OnClick} $defaultBundleButtonCBP onRadioClick
+        ${NSD_SetState} $defaultBundleButtonCBP $defaultBundleButtonStateCBP
 
         ; Custom bundle, which accepts a JSON file given by the user
         ${NSD_CreateAdditionalRadioButton} 5% 12% 40% 12u "Custom bundle"
-        Pop $0
-        nsDialogs::SetUserData $0 "CustomButton"
-        ${NSD_OnClick} $0 onRadioClick
+        Pop $customBundleButtonCBP
+        ${NSD_OnClick} $customBundleButtonCBP onRadioClick
+        ${NSD_SetState} $customBundleButtonCBP $customBundleButtonStateCBP
 
         ${NSD_CreateGroupBox} 50% 0% 45% 20% ""
         Pop $0
@@ -82,7 +98,7 @@
           ${NSD_CreateLabel} 10% 65% 80% 12u "Select a JSON file:"
           Pop $selectJsonInfoCBP
 
-          ${NSD_CreateFileRequest} 10% 75% 55% 12u "$EXEDIR\"
+          ${NSD_CreateFileRequest} 10% 75% 55% 12u "$jsonFileInputStateCBP"
           Pop $jsonFileInputCBP
 
           ${NSD_CreateBrowseButton} 70% 75% 20% 12u "Browse..."
@@ -91,16 +107,24 @@
 
       ; Enable just the default UI components
       Push 0
-      Call toggleUIComponents
+      Call toggleUIComponentsCBP
       
       nsDialogs::Show
+
+    FunctionEnd
+
+    Function chooseBundlePageLeave
+
+      ${NSD_GetState} $defaultBundleButtonCBP $defaultBundleButtonStateCBP
+      ${NSD_GetState} $customBundleButtonCBP $customBundleButtonStateCBP
+      ${NSD_GetText} $jsonFileInputCBP $jsonFileInputStateCBP
 
     FunctionEnd
 
   ;--------------------------------
   ; Helper functions
 
-    Function toggleUIComponents
+    Function toggleUIComponentsCBP
       
       ; Enable or disable the UI components that depend on choosing
       ; the custom bundle option
@@ -121,26 +145,22 @@
       ; Get the control handler of the UI component that triggered the event
       Pop $0
 
-      ; Get the radio button clicked
-      nsDialogs::GetUserData $0
-      Pop $1
-
       ; Change UI components depending on the radio button
-      ${If} $1 == "DefaultButton"
+      ${If} $0 == $defaultBundleButtonCBP
         ${NSD_SetText} $radioButtonDescCBP "Download a predefined bundle of \
           apps from the internet."
 
         ; Disable the UI components for a customized app bundle
         Push 0
-        Call toggleUIComponents
+        Call toggleUIComponentsCBP
 
-      ${ElseIf} $1 == "CustomButton"
+      ${ElseIf} $0 == $customBundleButtonCBP
         ${NSD_SetText} $radioButtonDescCBP "Full control over the apps and \
           versions you download, providing a valid JSON."
 
         ; Enable the UI components for a customized app bundle
         Push 1
-        Call toggleUIComponents
+        Call toggleUIComponentsCBP
       ${EndIf}
 
     FunctionEnd
