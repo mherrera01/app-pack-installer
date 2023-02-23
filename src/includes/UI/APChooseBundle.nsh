@@ -23,6 +23,7 @@
     ; Variables to keep the UI state
     Var defaultBundleButtonStateCBP
     Var customBundleButtonStateCBP
+    Var radioButtonDescStateCBP
     Var jsonFileInputStateCBP
 
   ;--------------------------------
@@ -32,6 +33,8 @@
 
       StrCpy $defaultBundleButtonStateCBP ${BST_CHECKED}
       StrCpy $customBundleButtonStateCBP ${BST_UNCHECKED}
+      StrCpy $radioButtonDescStateCBP "Download a predefined bundle of \
+        apps from the internet."
       StrCpy $jsonFileInputStateCBP ""
 
     FunctionEnd
@@ -74,8 +77,7 @@
         ${NSD_CreateGroupBox} 50% 0% 45% 20% ""
         Pop $0
 
-          ${NSD_CreateLabel} 52% 5% 42% 20u "Download a predefined bundle of \
-            apps from the internet."
+          ${NSD_CreateLabel} 52% 5% 42% 20u "$radioButtonDescStateCBP"
           Pop $radioButtonDescCBP
 
         ${NSD_CreateHLine} 5% 25% 90% 0u ""
@@ -100,23 +102,27 @@
 
           ${NSD_CreateFileRequest} 10% 75% 55% 12u "$jsonFileInputStateCBP"
           Pop $jsonFileInputCBP
+          SendMessage $jsonFileInputCBP ${EM_SETREADONLY} 1 0
 
           ${NSD_CreateBrowseButton} 70% 75% 20% 12u "Browse..."
           Pop $browseJsonButtonCBP
           ${NSD_OnClick} $browseJsonButtonCBP onJsonBrowse
 
       ; Enable just the default UI components
-      Push 0
+      Push $customBundleButtonStateCBP
       Call toggleUIComponentsCBP
       
       nsDialogs::Show
 
     FunctionEnd
 
+    ; Only called when the 'Next' button is clicked
     Function chooseBundlePageLeave
 
+      ; Store the current UI states for loading them on the next page creation
       ${NSD_GetState} $defaultBundleButtonCBP $defaultBundleButtonStateCBP
       ${NSD_GetState} $customBundleButtonCBP $customBundleButtonStateCBP
+      ${NSD_GetText} $radioButtonDescCBP $radioButtonDescStateCBP
       ${NSD_GetText} $jsonFileInputCBP $jsonFileInputStateCBP
 
     FunctionEnd
