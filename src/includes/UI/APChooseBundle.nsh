@@ -19,6 +19,7 @@
     Var browseJsonButtonCBP
 
     Var saveTemplateDirCBP
+    Var nextButtonCBP
 
     ; Variables to keep the UI state
     Var defaultBundleButtonStateCBP
@@ -65,13 +66,13 @@
         Pop $defaultBundleButtonCBP
 
         ; Select default radio button
-        ${NSD_OnClick} $defaultBundleButtonCBP onRadioClick
+        ${NSD_OnClick} $defaultBundleButtonCBP onRadioClickCBP
         ${NSD_SetState} $defaultBundleButtonCBP $defaultBundleButtonStateCBP
 
         ; Custom bundle, which accepts a JSON file given by the user
         ${NSD_CreateAdditionalRadioButton} 5% 12% 40% 12u "Custom bundle"
         Pop $customBundleButtonCBP
-        ${NSD_OnClick} $customBundleButtonCBP onRadioClick
+        ${NSD_OnClick} $customBundleButtonCBP onRadioClickCBP
         ${NSD_SetState} $customBundleButtonCBP $customBundleButtonStateCBP
 
         ${NSD_CreateGroupBox} 50% 0% 45% 20% ""
@@ -95,7 +96,7 @@
 
           ${NSD_CreateButton} 70% 47% 20% 12u "Template"
           Pop $templateButtonCBP
-          ${NSD_OnClick} $templateButtonCBP onDownloadTemplate
+          ${NSD_OnClick} $templateButtonCBP onDownloadTemplateCBP
 
           ${NSD_CreateLabel} 10% 65% 80% 12u "Select a JSON file:"
           Pop $selectJsonInfoCBP
@@ -106,8 +107,11 @@
 
           ${NSD_CreateBrowseButton} 70% 75% 20% 12u "Browse..."
           Pop $browseJsonButtonCBP
-          ${NSD_OnClick} $browseJsonButtonCBP onJsonBrowse
+          ${NSD_OnClick} $browseJsonButtonCBP onJsonBrowseCBP
 
+      ; Get the next button handler
+      GetDlgItem $nextButtonCBP $HWNDPARENT 1
+      
       ; Enable just the default UI components
       Push $customBundleButtonStateCBP
       Call toggleUIComponentsCBP
@@ -143,10 +147,25 @@
 
     FunctionEnd
 
+    Function setNextButtonStateOnJsonCBP
+
+      ; Get the JSON file from the UI component
+      ${NSD_GetText} $jsonFileInputCBP $0
+
+      ; Enable or disable the next button depending on whether a JSON
+      ; file has been selected
+      ${If} $0 == ""
+        EnableWindow $nextButtonCBP 0
+      ${Else}
+        EnableWindow $nextButtonCBP 1
+      ${EndIf}
+
+    FunctionEnd
+
   ;--------------------------------
   ; Event functions
 
-    Function onRadioClick
+    Function onRadioClickCBP
 
       ; Get the control handler of the UI component that triggered the event
       Pop $0
@@ -160,6 +179,9 @@
         Push 0
         Call toggleUIComponentsCBP
 
+        ; Enable the next button as no JSON file is required
+        EnableWindow $nextButtonCBP 1
+
       ${ElseIf} $0 == $customBundleButtonCBP
         ${NSD_SetText} $radioButtonDescCBP "Full control over the apps and \
           versions you download, providing a valid JSON."
@@ -167,11 +189,14 @@
         ; Enable the UI components for a customized app bundle
         Push 1
         Call toggleUIComponentsCBP
+
+        ; Check whether the next button must be enabled or not
+        Call setNextButtonStateOnJsonCBP
       ${EndIf}
 
     FunctionEnd
 
-    Function onDownloadTemplate
+    Function onDownloadTemplateCBP
 
       ; Empty the stack
       Pop $0
@@ -205,7 +230,7 @@
     saveDirError:
     FunctionEnd
 
-    Function onJsonBrowse
+    Function onJsonBrowseCBP
 
       ; Empty the stack
       Pop $0
@@ -218,6 +243,9 @@
       Pop $0
       ${If} $0 != "error"
         ${NSD_SetText} $jsonFileInputCBP "$0"
+
+        ; Check whether the next button must be enabled or not
+        Call setNextButtonStateOnJsonCBP
       ${EndIf}
 
     FunctionEnd
