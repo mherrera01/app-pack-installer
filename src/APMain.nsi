@@ -6,9 +6,10 @@
 
   ; User-defined NSH files
   !addincludedir ".\includes"
+  !addincludedir ".\includes\UI"
 
   !include "APSections.nsh"
-  !include "APInterface.nsh"
+  !include "APCoreUI.nsh"
 
   !include "MUI2.nsh"
   !include "nsDialogs.nsh"
@@ -82,8 +83,7 @@
   !insertmacro AP_SET_UI_LANGUAGES
 
   ; Define the parameters and functions for the custom pages
-  !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
-  !insertmacro AP_DEFINE_UI_VALIDATE_BUNDLE_PAGE
+  !insertmacro AP_DEFINE_UI_CUSTOM_PAGES
 
 ;--------------------------------
 ; Callback functions
