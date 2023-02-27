@@ -112,9 +112,9 @@
       ; Get the next button handler
       GetDlgItem $nextButtonCBP $HWNDPARENT 1
       
-      ; Enable just the default UI components
+      ; Enable the customized app bundle UI if the custom button is selected
       Push $customBundleButtonStateCBP
-      Call toggleUIComponentsCBP
+      Call toggleCustomizedUICBP
       
       nsDialogs::Show
 
@@ -134,10 +134,10 @@
   ;--------------------------------
   ; Helper functions
 
-    Function toggleUIComponentsCBP
+    Function toggleCustomizedUICBP
       
-      ; Enable or disable the UI components that depend on choosing
-      ; the custom bundle option
+      ; Enable (1) or disable (0) the UI components that depend on
+      ; choosing the custom bundle option
       Pop $0
       EnableWindow $createJsonInfoCBP $0
       EnableWindow $templateButtonCBP $0
@@ -177,7 +177,7 @@
 
         ; Disable the UI components for a customized app bundle
         Push 0
-        Call toggleUIComponentsCBP
+        Call toggleCustomizedUICBP
 
         ; Enable the next button as no JSON file is required
         EnableWindow $nextButtonCBP 1
@@ -188,7 +188,7 @@
 
         ; Enable the UI components for a customized app bundle
         Push 1
-        Call toggleUIComponentsCBP
+        Call toggleCustomizedUICBP
 
         ; Check whether the next button must be enabled or not
         Call setNextButtonStateOnJsonCBP
@@ -208,10 +208,10 @@
 
       ; Exit the function if the user cancels the operation or an error ocurrs
       ${If} $saveTemplateDirCBP == "error"
-        Goto saveDirError
+        Goto saveDirErrorCBP
       ${EndIf}
 
-      downloadTemplate:
+      downloadTemplateCBP:
 
         ; Download the JSON template file
         NScurl::http GET "${TEMPLATE_JSON_LINK}" \
@@ -224,10 +224,10 @@
           ; Allow the user to retry the download
           MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
             "$0$\nCheck your internet connection." \
-            IDRETRY downloadTemplate
+            IDRETRY downloadTemplateCBP
         ${EndIf}
 
-    saveDirError:
+    saveDirErrorCBP:
     FunctionEnd
 
     Function onJsonBrowseCBP
@@ -241,8 +241,9 @@
       ; Open a window to select a JSON file
       nsDialogs::SelectFileDialog open "$0" ".json files|*.json"
       Pop $0
-      ${If} $0 != "error"
+      ${If} $0 != ""
         ${NSD_SetText} $jsonFileInputCBP "$0"
+        ${NSD_SetText} $radioButtonDescCBP "$0"
 
         ; Check whether the next button must be enabled or not
         Call setNextButtonStateOnJsonCBP

@@ -41,7 +41,7 @@
 
       ; Create a timer to update the progress bar of the
       ; background bundle download (each 1000 ms)
-      ${NSD_CreateTimer} onProgressDefBundle 1000
+      ${NSD_CreateTimer} onProgressDefBundleVBP 1000
 
       ; Download asynchronously the default app bundle
       NScurl::http GET "${DEFAULT_BUNDLE_JSON_LINK}" \
@@ -71,12 +71,12 @@
 
       ; Disable the back and next buttons until the download is completed
       Push 0
-      Call toggleBackNextButtons
+      Call toggleBackNextButtonsVBP
 
       nsDialogs::Show
 
       ; Kill the previously set timer
-      ${NSD_KillTimer} onProgressDefBundle
+      ${NSD_KillTimer} onProgressDefBundleVBP
 
     FunctionEnd
 
@@ -86,7 +86,7 @@
   ;--------------------------------
   ; Helper functions
 
-    Function toggleBackNextButtons
+    Function toggleBackNextButtonsVBP
       
       ; Enable or disable the back/next buttons of the page
       Pop $0
@@ -98,7 +98,7 @@
   ;--------------------------------
   ; Event functions
 
-    Function onProgressDefBundle
+    Function onProgressDefBundleVBP
 
       ; Get the download status in a formatted string
       NScurl::query /ID $downloadDefBundleVBP "[@PERCENT@%] @OUTFILE@, \
@@ -117,12 +117,12 @@
       ${If} $0 == "100"
         ; Enable the back and next buttons
         Push 1
-        Call toggleBackNextButtons
+        Call toggleBackNextButtonsVBP
 
         ; Update the download status to 'Completed'
         ${NSD_SetText} $downloadStatusInfoVBP "Completed"
 
-        ${NSD_KillTimer} onProgressDefBundle
+        ${NSD_KillTimer} onProgressDefBundleVBP
       ${EndIf}
 
     FunctionEnd
