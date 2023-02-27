@@ -243,10 +243,9 @@
       Pop $0
       ${If} $0 != ""
         ${NSD_SetText} $jsonFileInputCBP "$0"
-        ${NSD_SetText} $radioButtonDescCBP "$0"
 
-        ; Check whether the next button must be enabled or not
-        Call setNextButtonStateOnJsonCBP
+        ; Enable the next button as a JSON file is selected
+        EnableWindow $nextButtonCBP 1
       ${EndIf}
 
     FunctionEnd
