@@ -1,14 +1,20 @@
 {
-    "apps": [
+    "appGroups": [
         {
-            "name": "Application name 1",
-            "description": "Brief description of app1",
-            "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
-        },
-        {
-            "name": "Application name 2",
-            "description": "Brief description of app2",
-            "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
+            "groupName": "Group name 1",
+            "apps": [
+                {
+                    "name": "Application name 1",
+                    "description": "Brief description of app1",
+                    "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
+                },
+                {
+                    "name": "Application name 2",
+                    "description": "Brief description of app2",
+                    "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
+                }
+            ]
+            
         }
     ]
 }

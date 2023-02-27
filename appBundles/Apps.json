@@ -1,9 +1,15 @@
 {
-    "apps": [
+    "appGroups": [
         {
-            "name": "WiX v3 Toolset",
-            "description": "The WiX toolset lets developers create installers for Windows.",
-            "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
+            "groupName": "IT",
+            "apps": [
+                {
+                    "name": "WiX v3 Toolset",
+                    "description": "The WiX toolset lets developers create installers for Windows.",
+                    "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
+                }
+            ]
+            
         }
     ]
 }
