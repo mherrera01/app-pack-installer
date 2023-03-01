@@ -5,12 +5,12 @@
             "apps": [
                 {
                     "name": "Application name 1",
-                    "description": "Brief description of app1",
+                    "description": "Brief description of app1 (optional)",
                     "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
                 },
                 {
                     "name": "Application name 2",
-                    "description": "Brief description of app2",
+                    "description": "Brief description of app2 (optional)",
                     "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
                 }
             ]
