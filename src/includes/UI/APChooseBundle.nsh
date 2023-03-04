@@ -208,7 +208,7 @@
 
       ; Exit the function if the user cancels the operation or an error ocurrs
       ${If} $saveTemplateDirCBP == "error"
-        Goto saveDirErrorCBP
+        Return
       ${EndIf}
 
       downloadTemplateCBP:
@@ -227,7 +227,6 @@
             IDRETRY downloadTemplateCBP
         ${EndIf}
 
-    saveDirErrorCBP:
     FunctionEnd
 
     Function onJsonBrowseCBP
