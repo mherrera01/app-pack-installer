@@ -15,12 +15,12 @@
 
   ; Display customized text in the welcome page
   !define MUI_WELCOMEPAGE_TEXT "Setup will guide you through the \
-    installation of AppPack.$\n$\nA bundle of third-party applications \
-    you choose will be installed on your computer. Make sure you have \
-    an internet connection.$\n$\nIt is recommended that you close all \
-    other applications before starting Setup. This will make it possible \
-    to update relevant system files without having to reboot your \
-    computer.$\n$\nClick Next to continue."
+    installation of ${PRODUCT_NAME}.$\n$\nA bundle of third-party \
+    applications you choose will be installed on your computer. Make \
+    sure you have an internet connection.$\n$\nIt is recommended that \
+    you close all other applications before starting Setup. This will \
+    make it possible to update relevant system files without having \
+    to reboot your computer.$\n$\nClick Next to continue."
 
 !macroend
 

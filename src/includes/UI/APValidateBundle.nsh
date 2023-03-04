@@ -18,6 +18,7 @@
   ${If} ${Errors}
     Push "The JSON field '${jsonField}' is missing/misplaced."
     Call updateJsonValidationUIVBP
+    ClearErrors
     Return
   ${EndIf}
 
@@ -49,6 +50,9 @@
     Var jsonCountAppGroupsVBP
     Var jsonCountAppsVBP
 
+    ; Custom bundle warning checkbox
+    Var trustCustomBundleCheckVBP
+
     Var backButtonVBP
     Var nextButtonVBP
 
@@ -67,7 +71,7 @@
         Abort
       ${EndIf}
 
-      ; Create a bold font for the disclaimer
+      ; Create a bold font for important notes
       CreateFont $boldFontVBP "Microsoft Sans Serif" "8.25" "700"
 
       ; Clear the error flag as it is set by the nsJSON functions
@@ -96,32 +100,9 @@
         ; Set the progress bar range from 0 to 100 (percentage)
         SendMessage $downloadProgressBarVBP ${PBM_SETRANGE32} 0 100
 
-        ;--------------------------------
-        ; JSON validation UI
-
-          ${NSD_CreateGroupBox} 0% 30% 100% 30% ""
-          Pop $0
-
-            ${NSD_CreateLabel} 5% 38% 15% 12u "App groups:"
-            Pop $0
-
-            ${NSD_CreateLabel} 20% 38% 10% 12u ""
-            Pop $appGroupsInfoVBP
-
-            ${NSD_CreateLabel} 5% 48% 15% 12u "Apps:"
-            Pop $0
-
-            ${NSD_CreateLabel} 20% 48% 10% 12u ""
-            Pop $appsInfoVBP
-
-            ${NSD_CreateVLine} 35% 38% 0u 24u ""
-            Pop $0
-
-            ${NSD_CreateLabel} 40% 38% 55% 12u ""
-            Pop $validationStatusInfoVBP
-
-            ${NSD_CreateLabel} 40% 48% 55% 12u ""
-            Pop $validationMsgInfoVBP
+        ; JSON validation UI (starting on 30% in the Y axis)
+        Push 30
+        Call createJsonValidationUIVBP
 
         ; Disclaimer bold text
         ${NSD_CreateLabel} 0% 68% 15% 12u "Disclaimer: "
@@ -137,6 +118,44 @@
         Call httpDefBundleDownloadVBP
 
       ${ElseIf} $customBundleButtonStateCBP == ${BST_CHECKED}
+
+        ; JSON validation UI (starting on 0% in the Y axis)
+        Push 0
+        Call createJsonValidationUIVBP
+
+        ; Warning bold text
+        ${NSD_CreateLabel} 0% 38% 13% 12u "Warning: "
+        Pop $0
+        SendMessage $0 ${WM_SETFONT} $boldFontVBP 0
+
+        ${NSD_CreateLabel} 14% 38% 86% 26u "${PRODUCT_NAME} downloads \
+          and executes the application setups specified in the custom \
+          bundle. No security check is made to the links provided by the \
+          JSON file and, hence, malicious code could be executed."
+        Pop $0
+
+        ${NSD_CreateCheckBox} 14% 64% 5% 6% ""
+        Pop $trustCustomBundleCheckVBP
+        ${NSD_OnClick} $trustCustomBundleCheckVBP onCheckBoxClick
+        ${NSD_SetState} $trustCustomBundleCheckVBP ${BST_UNCHECKED}
+
+        ${NSD_CreateLabel} 19% 64% 81% 12u "I trust the custom \
+          bundle source."
+        Pop $0
+
+        ; Disable buttons until the JSON validation is completed
+        EnableWindow $trustCustomBundleCheckVBP 0
+        Push 0
+        Call toggleBackNextButtonsVBP
+
+        ; The JSON validation UI is set to the loading status
+        Push 0
+        Call updateJsonValidationUIVBP
+
+        ; Load the bundle provided in the previous page
+        Push "$jsonFileInputStateCBP"
+        Call loadJsonBundleVBP
+
       ${EndIf}
 
       nsDialogs::Show
@@ -188,6 +207,41 @@
 
     FunctionEnd
 
+    Function createJsonValidationUIVBP
+
+      ; Get the position in the Y axis (percentage) of the UI
+      ; group box, as a starting point for the rest of the elements
+      Pop $0
+
+      IntOP $1 $0 + 8
+      IntOp $2 $0 + 18
+
+      ${NSD_CreateGroupBox} 0% "$0%" 100% 30% ""
+      Pop $0
+
+        ${NSD_CreateLabel} 5% "$1%" 15% 12u "App groups:"
+        Pop $0
+
+        ${NSD_CreateLabel} 20% "$1%" 10% 12u ""
+        Pop $appGroupsInfoVBP
+
+        ${NSD_CreateLabel} 5% "$2%" 15% 12u "Apps:"
+        Pop $0
+
+        ${NSD_CreateLabel} 20% "$2%" 10% 12u ""
+        Pop $appsInfoVBP
+
+        ${NSD_CreateVLine} 35% "$1%" 0u 24u ""
+        Pop $0
+
+        ${NSD_CreateLabel} 40% "$1%" 55% 12u ""
+        Pop $validationStatusInfoVBP
+
+        ${NSD_CreateLabel} 40% "$2%" 55% 12u ""
+        Pop $validationMsgInfoVBP
+
+    FunctionEnd
+
     Function updateJsonValidationUIVBP
 
       ; Get the JSON validation status. 0 for loading, 1 on
@@ -222,11 +276,27 @@
           ............................... ERROR"
         ${NSD_SetText} $validationMsgInfoVBP "$0"
 
-        ; Enable the back button and clear the error flag
+        ; Enable the back button
         EnableWindow $backButtonVBP 1
-        ClearErrors
 
       ${EndIf}      
+
+    FunctionEnd
+
+    Function loadJsonBundleVBP
+
+      ; Get the JSON bundle location
+      Pop $0
+
+      ; Load the JSON file
+      nsJSON::Set /file "$0"
+      ${If} ${Errors}
+        Push "The downloaded bundle could not be opened."
+        Call updateJsonValidationUIVBP
+        ClearErrors
+      ${Else}
+        Call setJsonBundlePropVBP
+      ${EndIf}
 
     FunctionEnd
 
@@ -276,9 +346,14 @@
       Push 1
       Call updateJsonValidationUIVBP
 
-      ; Enable the back and next buttons
-      Push 1
-      Call toggleBackNextButtonsVBP
+      ; Enable the back and next (only for the default bundle option) buttons
+      EnableWindow $backButtonVBP 1
+
+      ${If} $customBundleButtonStateCBP == ${BST_CHECKED}
+        EnableWindow $trustCustomBundleCheckVBP 1
+      ${Else}
+        EnableWindow $nextButtonCBP 1
+      ${EndIf}
 
     FunctionEnd
 
@@ -337,15 +412,21 @@
         ${NSD_SetText} $downloadStatusInfoVBP "Completed"
 
         ; Load the default JSON bundle
-        nsJSON::Set /file "$PLUGINSDIR\Apps.json"
-        ${If} ${Errors}
-          Push "The downloaded bundle could not be opened."
-          Call updateJsonValidationUIVBP
-        ${Else}
-          Call setJsonBundlePropVBP
-        ${EndIf}
+        Push "$PLUGINSDIR\Apps.json"
+        Call loadJsonBundleVBP
 
       ${EndIf}
+
+    FunctionEnd
+
+    Function onCheckBoxClick
+
+      ; Empty the stack
+      Pop $0
+
+      ; Enable next button only if the user trusts the custom bundle
+      ${NSD_GetState} $trustCustomBundleCheckVBP $0
+      EnableWindow $nextButtonVBP $0
 
     FunctionEnd
 
