@@ -14,6 +14,7 @@
   !include "MUI2.nsh"
   !include "nsDialogs.nsh"
   !include "LogicLib.nsh"
+  !include "nsThread.nsh"
 
 ;--------------------------------
 ; Defines
@@ -114,7 +115,7 @@
       ; Required for storing temporal files created by the installer
       InitPluginsDir
 
-      ; Set the default values of the custom pages
+      ; Set the default values of the first custom page displayed
       Call setDefaultUIValuesCBP
 
   FunctionEnd
@@ -126,10 +127,10 @@
     ; can be removed from the %temp% folder.
 
     ; Get the NScurl module handle.
-    ; The 't' prefix indicates that the module name is null-terminated.
-    ; A paramater is needed to get the GetModuleHandle return value:
-    ; (i . s) consists of type (i = integer), source (. = ignored) and
-    ; destination (s = stack).
+    ; System:Call PROC [(PARAM1, PARAM2, ...) [RETURN]]:
+    ; PROC -> kernel32::GetModuleHandle
+    ; (PARAM1) -> (t 'NScurl.dll') | type = string, source = concrete value
+    ; RETURN -> i .s | type = integer, source = ignored, destination = stack
     System::Call "kernel32::GetModuleHandle(t 'NScurl.dll') i .s"
     Pop $0
 

@@ -17,7 +17,8 @@ Some additional plugins are required. In order to install them, the simple guide
 [*"How can I install a plugin?"*](https://nsis.sourceforge.io/How_can_I_install_a_plugin)
 from the NSIS page must be followed.
 
-- [NScurl](https://nsis.sourceforge.io/NScurl_plug-in): Downloads safely the application
-setups with HTTPS.
+- [NScurl](https://nsis.sourceforge.io/NScurl_plug-in): Downloads safely the required
+files from the internet with HTTPS.
 - [NsJSON](https://nsis.sourceforge.io/NsJSON_plug-in): Reads the JSON file that has all
 the information of each application to install.
+- [NsThread](https://nsis.sourceforge.io/NsThread_plug-in): Allows the creation of threads.

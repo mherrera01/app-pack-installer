@@ -52,7 +52,8 @@
       Pop $dialogCBP
 
       ${If} $dialogCBP == "error"
-        Abort
+        Call .onGuIEnd
+        Quit
       ${EndIf}
 
       ; ${NSD_Create*} x y width height text
@@ -65,13 +66,15 @@
         ${NSD_CreateFirstRadioButton} 5% 1% 40% 12u "Default bundle (recommended)"
         Pop $defaultBundleButtonCBP
 
-        ; Select default radio button
+        ; Set the state and click event of the default bundle
         ${NSD_OnClick} $defaultBundleButtonCBP onRadioClickCBP
         ${NSD_SetState} $defaultBundleButtonCBP $defaultBundleButtonStateCBP
 
         ; Custom bundle, which accepts a JSON file given by the user
         ${NSD_CreateAdditionalRadioButton} 5% 12% 40% 12u "Custom bundle"
         Pop $customBundleButtonCBP
+
+        ; Set the state and click event of the custom bundle
         ${NSD_OnClick} $customBundleButtonCBP onRadioClickCBP
         ${NSD_SetState} $customBundleButtonCBP $customBundleButtonStateCBP
 
@@ -215,7 +218,7 @@
 
         ; Download the JSON template file
         NScurl::http GET "${TEMPLATE_JSON_LINK}" \
-          "$saveTemplateDirCBP\Template.json" /TIMEOUT 1m /POPUP /END
+          "$saveTemplateDirCBP\Template.json" /TIMEOUT 30s /POPUP /END
         Pop $0
 
         ${If} $0 == "OK"

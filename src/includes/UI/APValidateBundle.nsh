@@ -68,7 +68,8 @@
       Pop $dialogVBP
 
       ${If} $dialogVBP == "error"
-        Abort
+        Call .onGuIEnd
+        Quit
       ${EndIf}
 
       ; Create a bold font for important notes
@@ -152,9 +153,15 @@
         Push 0
         Call updateJsonValidationUIVBP
 
-        ; Load the bundle provided in the previous page
-        Push "$jsonFileInputStateCBP"
-        Call loadJsonBundleVBP
+        ; Create a thread for validating the custom bundle without
+        ; blocking the UI
+        ${Thread_Create} threadCustomBundleVBP $0
+
+      ${Else}
+
+        ; No bundle button selected
+        Call .onGuIEnd
+        Quit
 
       ${EndIf}
 
@@ -200,7 +207,7 @@
 
       ; Download asynchronously the default app bundle in the %temp% folder
       NScurl::http GET "${DEFAULT_BUNDLE_JSON_LINK}" \
-        "$PLUGINSDIR\Apps.json" /TIMEOUT 1m /INSIST /BACKGROUND /END
+        "$PLUGINSDIR\Apps.json" /TIMEOUT 30s /BACKGROUND /END
 
       ; On background mode, the transfer ID is returned
       Pop $downloadDefBundleIdVBP
@@ -264,8 +271,7 @@
 
         ${NSD_SetText} $validationStatusInfoVBP "Validation status: \
           .................................... OK"
-        ${NSD_SetText} $validationMsgInfoVBP "Default bundle \
-          validated successfully."
+        ${NSD_SetText} $validationMsgInfoVBP "Bundle validated successfully."
 
       ; Error status when a message is pushed to the stack
       ${Else}
@@ -279,11 +285,11 @@
         ; Enable the back button
         EnableWindow $backButtonVBP 1
 
-      ${EndIf}      
+      ${EndIf}
 
     FunctionEnd
 
-    Function loadJsonBundleVBP
+    Function validateJsonBundleVBP
 
       ; Get the JSON bundle location
       Pop $0
@@ -291,7 +297,7 @@
       ; Load the JSON file
       nsJSON::Set /file "$0"
       ${If} ${Errors}
-        Push "The downloaded bundle could not be opened."
+        Push "The JSON bundle could not be opened."
         Call updateJsonValidationUIVBP
         ClearErrors
       ${Else}
@@ -342,7 +348,7 @@
 
       ${Next}
 
-      ; Set a successfull JSON validation UI
+      ; Set a successful JSON validation UI
       Push 1
       Call updateJsonValidationUIVBP
 
@@ -361,6 +367,9 @@
   ; Event functions
 
     Function onRetryDownloadVBP
+
+      ; Empty the stack
+      Pop $0
 
       ; Retry the default bundle download
       Call httpDefBundleDownloadVBP
@@ -411,9 +420,9 @@
         ; Update the download status to 'Completed'
         ${NSD_SetText} $downloadStatusInfoVBP "Completed"
 
-        ; Load the default JSON bundle
-        Push "$PLUGINSDIR\Apps.json"
-        Call loadJsonBundleVBP
+        ; Create a thread for validating the default bundle without
+        ; blocking the UI
+        ${Thread_Create} threadDefBundleVBP $0
 
       ${EndIf}
 
@@ -427,6 +436,25 @@
       ; Enable next button only if the user trusts the custom bundle
       ${NSD_GetState} $trustCustomBundleCheckVBP $0
       EnableWindow $nextButtonVBP $0
+
+    FunctionEnd
+
+  ;--------------------------------
+  ; Thread routines
+
+    Function threadDefBundleVBP
+
+      ; Validate the default JSON bundle in a different thread
+      Push "$PLUGINSDIR\Apps.json"
+      Call validateJsonBundleVBP
+
+    FunctionEnd
+
+    Function threadCustomBundleVBP
+
+      ; Validate the bundle provided in the previous page in a different thread
+      Push "$jsonFileInputStateCBP"
+      Call validateJsonBundleVBP
 
     FunctionEnd
 
