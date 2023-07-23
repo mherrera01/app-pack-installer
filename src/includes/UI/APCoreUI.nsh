@@ -3,6 +3,7 @@
 
 !include "APChooseBundle.nsh"
 !include "APValidateBundle.nsh"
+!include "APChooseApps.nsh"
 
 !macro AP_SET_UI_SETTINGS
 
@@ -34,10 +35,10 @@
   !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
   ; Custom pages
+  Page custom chooseAppsPage chooseAppsPageLeave /ENABLECANCEL
   Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
   Page custom validateBundlePage validateBundlePageLeave /ENABLECANCEL
 
-  !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
   
@@ -61,5 +62,6 @@
 
   !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
   !insertmacro AP_DEFINE_UI_VALIDATE_BUNDLE_PAGE
+  !insertmacro AP_DEFINE_UI_CHOOSE_APPS_PAGE
 
 !macroend

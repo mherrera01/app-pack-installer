@@ -138,10 +138,9 @@
         ${NSD_CreateCheckBox} 14% 64% 5% 6% ""
         Pop $trustCustomBundleCheckVBP
         ${NSD_OnClick} $trustCustomBundleCheckVBP onCheckBoxClick
-        ${NSD_SetState} $trustCustomBundleCheckVBP ${BST_UNCHECKED}
 
         ${NSD_CreateLabel} 19% 64% 81% 12u "I trust the custom \
-          bundle source."
+          bundle source"
         Pop $0
 
         ; Disable buttons until the JSON validation is completed

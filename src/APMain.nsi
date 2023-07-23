@@ -4,17 +4,17 @@
 ;--------------------------------
 ; Includes
 
+  !include "MUI2.nsh"
+  !include "nsDialogs.nsh"
+  !include "LogicLib.nsh"
+  !include "nsThread.nsh"
+
   ; User-defined NSH files
   !addincludedir ".\includes"
   !addincludedir ".\includes\UI"
 
   !include "APSections.nsh"
   !include "APCoreUI.nsh"
-
-  !include "MUI2.nsh"
-  !include "nsDialogs.nsh"
-  !include "LogicLib.nsh"
-  !include "nsThread.nsh"
 
 ;--------------------------------
 ; Defines
@@ -156,9 +156,6 @@
       !insertmacro AP_INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
 
     SectionGroupEnd
-
-  ; The section descriptions are set for displaying info text in the MUI Components page
-  !insertmacro AP_SET_SECTION_DESC
 
   ; Uninstall section
   !insertmacro AP_INSERT_UNINSTALL_SECTION

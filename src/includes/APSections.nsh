@@ -51,26 +51,16 @@
 
     SetOutPath "$INSTDIR"
 
-    ; Download the setup executable
-    NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" \
-      "$INSTDIR\Apps\wix311.exe" /TIMEOUT 30s /END
+    ; https://nsis-dev.github.io/NSIS-Forums/html/t-333450.html
+    ${ForEach} $R1 0 $jsonCountAppsVBP + 1
+
+      ; Download the setup executable
+      NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" \
+        "$INSTDIR\Apps\wix311.exe" /TIMEOUT 30s /END
+
+    ${Next}
 
   SectionEnd
-
-!macroend
-
-!macro AP_SET_SECTION_DESC
-
-  ; Language strings
-  LangString DESC_Installer ${LANG_ENGLISH} "The installer data."
-  LangString DESC_WiXv3 ${LANG_ENGLISH} "The WiX toolset lets developers \
-    create installers for Windows."
-
-  ; Assign each language string to the corresponding sections
-  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_Installer} $(DESC_Installer)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_WiXv3} $(DESC_WiXv3)
-  !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 !macroend
 
