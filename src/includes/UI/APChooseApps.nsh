@@ -1,15 +1,7 @@
 ; File: APChooseApps.nsh
 ; Author: Miguel Herrera
 
-; Include the header file that allows to create and handle
-; a ListView control
-!include "CommCtrl.nsh"
-
-; Fix a bug in the header file, so that there are not
-; verbose compilation errors
-!ifndef _COMMCTRL_NSH_VERBOSE
-  !define _COMMCTRL_NSH_VERBOSE ${_COMMCTRL_VERBOSE} 
-!endif
+!include "TreeViewControl.nsh"
 
 !macro AP_DEFINE_UI_CHOOSE_APPS_PAGE
 
@@ -17,7 +9,7 @@
   ; CAP (Choose Apps Page) variables
 
     Var dialogCAP
-    Var appsListViewCAP
+    Var appsTreeViewCAP
 
   ;--------------------------------
   ; Main functions triggered on custom page creation and disposal
@@ -47,18 +39,21 @@
         for a custom installation"
       Pop $0
 
-      ${NSD_CreateListView} 0% 30% 60% 65% ""
-      Pop $appsListViewCAP
+      ; Create tree view for the apps
+      ${TV_CREATE} 0% 30% 60% 65% ""
+      Pop $appsTreeViewCAP
 
-      ; Modify the style of the list view
-      ; ListView styles: http://msdn.microsoft.com/library/bb774739.aspx
-      ; Extended ListView styles: http://msdn.microsoft.com/library/bb774732.aspx
-      SendMessage $appsListViewCAP ${LVM_SETEXTENDEDLISTVIEWSTYLE} 0 ${LVS_EX_CHECKBOXES}|${LVS_EX_FULLROWSELECT}
+      ${TV_INSERT_ITEM} $appsTreeViewCAP "Aplicación 1"
 
-      ${NSD_LV_InsertColumn} $appsListViewCAP 0 100 "Apps"
+      System::Call "*(&t128) i .R0"
+      System::Call "*(i ${TVIF_TEXT}|${TVIF_HANDLE}, i r0, i, i, i R0, i 128, i, i, i, i, i, i, i, i, i) i .R1"
+      SendMessage $appsTreeViewCAP ${TVM_GETITEM} 0 $R1
+      System::Free $R1
 
-      ${NSD_LV_InsertItem} $appsListViewCAP 0 "Elem1"
-      ${NSD_LV_InsertItem} $appsListViewCAP 1 "Elem2"
+      System::Call "kernel32::lstrcpy(t .s, i R0)"
+      Pop $0
+      MessageBox MB_OK $0
+      System::Free $R0
 
       ${NSD_CreateGroupBox} 65% 30% 34% 55% "Description"
       Pop $0
