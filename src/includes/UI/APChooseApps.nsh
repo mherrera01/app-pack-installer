@@ -43,17 +43,24 @@
       ${TV_CREATE} 0% 30% 60% 65% ""
       Pop $appsTreeViewCAP
 
-      ${TV_INSERT_ITEM} $appsTreeViewCAP "Aplicación 1"
+      ; The TVS_CHECKBOXES style must be set after the tree view creation
+      ; with SetWindowLong. Otherwise, as the documentation states, the
+      ; checkboxes might appear unchecked (even if they are explicitly
+      ; checked with the TVM_SETITEM message) depending on timing issues.
+      System::Call "user32::GetWindowLong(i $appsTreeViewCAP, i ${GWL_STYLE}) i .R0"
+      IntOp $R0 ${TVS_CHECKBOXES} | $R0
+      System::Call "user32::SetWindowLong(i $appsTreeViewCAP, i ${GWL_STYLE}, i R0)"
 
-      System::Call "*(&t128) i .R0"
-      System::Call "*(i ${TVIF_TEXT}|${TVIF_HANDLE}, i r0, i, i, i R0, i 128, i, i, i, i, i, i, i, i, i) i .R1"
-      SendMessage $appsTreeViewCAP ${TVM_GETITEM} 0 $R1
-      System::Free $R1
+      GetFunctionAddress $0 onTreeViewNotifyCAP
+      nsDialogs::OnNotify $appsTreeViewCAP $0
 
-      System::Call "kernel32::lstrcpy(t .s, i R0)"
+      ${TV_INSERT_ITEM} $appsTreeViewCAP ${TVI_ROOT} "Aplicación 1"
       Pop $0
-      MessageBox MB_OK $0
-      System::Free $R0
+
+      ${TV_INSERT_ITEM} $appsTreeViewCAP $0 "Sub Aplicación"
+      Pop $0
+
+      ${TV_SET_ITEM_CHECK} $appsTreeViewCAP $0 ${TVIS_CHECKED}
 
       ${NSD_CreateGroupBox} 65% 30% 34% 55% "Description"
       Pop $0
@@ -69,6 +76,23 @@
     FunctionEnd
 
     Function chooseAppsPageLeave
+    FunctionEnd
+
+  ;--------------------------------
+  ; Helper functions
+
+    ; https://stackoverflow.com/questions/47814925/nsis-listview-is-possible-to-set-checkbox-as-disabled
+    Function onTreeViewNotifyCAP
+
+      Pop $0 ; UI handle
+      Pop $1 ; Message code
+      Pop $2 ; A pointer to the NMHDR stucture
+
+      ; https://stackoverflow.com/questions/1774026/checking-a-win32-tree-view-item-automatically-checks-all-child-items
+      ${If} $1 = ${NM_TVSTATEIMAGECHANGING}
+        MessageBox MB_OK "Item unchecked/checked"
+      ${EndIf}
+
     FunctionEnd
 
 !macroend
