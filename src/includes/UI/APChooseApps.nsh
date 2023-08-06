@@ -10,6 +10,10 @@
 
     Var dialogCAP
     Var appsTreeViewCAP
+    Var appDescInfoCAP
+
+    Var currentAppsSelectedCAP
+    Var appsSelectedInfoCAP
 
   ;--------------------------------
   ; Main functions triggered on custom page creation and disposal
@@ -54,22 +58,31 @@
       GetFunctionAddress $0 onTreeViewNotifyCAP
       nsDialogs::OnNotify $appsTreeViewCAP $0
 
-      ${TV_INSERT_ITEM} $appsTreeViewCAP ${TVI_ROOT} "Aplicación 1"
+      ${TV_INSERT_ITEM} $appsTreeViewCAP ${TVI_ROOT} "Browsers" "Access to websites."
       Pop $0
+      ${TV_SET_ITEM_CHECK} $appsTreeViewCAP $0 0
 
-      ${TV_INSERT_ITEM} $appsTreeViewCAP $0 "Sub Aplicación"
+      ${TV_INSERT_ITEM} $appsTreeViewCAP $0 "Firefox" "Firefox is a free open-source \
+        browser whose development is overseen by the Mozilla Corporation."
       Pop $0
-
       ${TV_SET_ITEM_CHECK} $appsTreeViewCAP $0 ${TVIS_CHECKED}
 
       ${NSD_CreateGroupBox} 65% 30% 34% 55% "Description"
       Pop $0
 
-        ${NSD_CreateLabel} 67% 40% 30% 40% "App info"
-        Pop $0
+        ${NSD_CreateLabel} 67% 40% 30% 40% "Position your mouse over \
+          a component to see its description."
+        Pop $appDescInfoCAP
 
-      ${NSD_CreateLabel} 67% 88% 30% 12u "Apps selected: 0"
+        ; Grey out the description until the mouse is over an app
+        EnableWindow $appDescInfoCAP 0
+
+      ${NSD_CreateLabel} 67% 88% 20% 12u "Apps selected:"
       Pop $0
+
+      StrCpy $currentAppsSelectedCAP "1"
+      ${NSD_CreateLabel} 90% 88% 7% 12u "$currentAppsSelectedCAP"
+      Pop $appsSelectedInfoCAP
 
       nsDialogs::Show
 
@@ -79,18 +92,57 @@
     FunctionEnd
 
   ;--------------------------------
-  ; Helper functions
+  ; Event functions
 
-    ; https://stackoverflow.com/questions/47814925/nsis-listview-is-possible-to-set-checkbox-as-disabled
     Function onTreeViewNotifyCAP
 
       Pop $0 ; UI handle
       Pop $1 ; Message code
-      Pop $2 ; A pointer to the NMHDR stucture
 
-      ; https://stackoverflow.com/questions/1774026/checking-a-win32-tree-view-item-automatically-checks-all-child-items
+      ; A pointer to the NMHDR stucture. For some notification
+      ; messages, this parameter points to a larger structure
+      ; that has the NMHDR structure as its first member.
+      Pop $2
+
+      ; The item checkbox state has changed
       ${If} $1 = ${NM_TVSTATEIMAGECHANGING}
-        MessageBox MB_OK "Item unchecked/checked"
+
+        ; Read the new item state from the NMTVSTATEIMAGECHANGING structure
+        System::Call "*$2(i, i, i, i, i, i .R0)"
+
+        ${If} $R0 = 2 ; Checked
+          IntOp $currentAppsSelectedCAP $currentAppsSelectedCAP + 1
+        ${ElseIf} $R0 = 1 ; Unchecked
+          IntOp $currentAppsSelectedCAP $currentAppsSelectedCAP - 1
+        ${EndIf}
+
+        ; Update the apps selected UI
+        ${NSD_SetText} $appsSelectedInfoCAP "$currentAppsSelectedCAP"
+
+      ; With the TVS_INFOTIP applied, the cursor is over an item
+      ${ElseIf} $1 = ${TVN_GETINFOTIP}
+
+        ; Read the item and its description (in lParam) from the
+        ; NMTVGETINFOTIP structure
+        System::Call "*$2(i, i, i, i, i, i .R0, i .R1)"
+
+        ; Get the description string by using the lparam buffer
+        System::Call "kernel32::lstrcpy(t .r3, i R1)"
+
+        ; Check if the item has a description, as it is optional
+        ${If} $3 == ""
+
+          ; Show the item name if there is no description
+          ${TV_GET_ITEM_TEXT} $appsTreeViewCAP $R0
+          Pop $3
+          ${NSD_SetText} $appDescInfoCAP "$3."
+
+        ${Else}
+          ${NSD_SetText} $appDescInfoCAP "$3"
+        ${EndIf}
+
+        EnableWindow $appDescInfoCAP 1
+
       ${EndIf}
 
     FunctionEnd

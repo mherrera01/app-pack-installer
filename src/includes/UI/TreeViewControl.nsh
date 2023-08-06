@@ -10,6 +10,7 @@
 !define TVS_LINESATROOT     0x0004
 !define TVS_DISABLEDRAGDROP 0x0010
 !define TVS_CHECKBOXES      0x0100
+!define TVS_INFOTIP         0x0800
 !define TVS_FULLROWSELECT   0x1000
 
 ; Messages
@@ -22,8 +23,9 @@
 !define TVM_GETITEMSTATE 0x1127
 
 ; Notifications
-!define TVN_SELCHANGED          -451 ; -402 for ASCII
 !define NM_TVSTATEIMAGECHANGING -24
+!define TVN_GETINFOTIP          -414 ; -413 for ASCII
+!define TVN_SELCHANGED          -451 ; -402 for ASCII
 
 ; Insert item types (TVINSERTSTRUCT)
 !define TVI_ROOT  0xFFFF0000 ; As a root item
@@ -63,16 +65,19 @@
 ;--------------------------------
 ; Interface
 
-  !define __TVI_MAX_TEXT 128
+  !define __TVI_MAX_TEXT 48
+  !define /math __TVI_MAX_TEXT_NT ${__TVI_MAX_TEXT} + 1
+  !define __TVI_MAX_DESC 192
+  !define /math __TVI_MAX_DESC_NT ${__TVI_MAX_DESC} + 1
 
   !define __TV_CLASS SysTreeView32
   !define __TV_DEF_STYLES ${WS_CHILD}|${WS_VISIBLE}|${WS_BORDER}|${WS_TABSTOP}|\
-    ${TVS_HASBUTTONS}|${TVS_HASLINES}|${TVS_LINESATROOT}|${TVS_DISABLEDRAGDROP}
+    ${TVS_HASBUTTONS}|${TVS_HASLINES}|${TVS_LINESATROOT}|${TVS_DISABLEDRAGDROP}|${TVS_INFOTIP}
   !define __TV_DEF_EXSTYLES 0
 
   ;--------------------------------
   ; TV_CREATE
-  ; Create a tree view control with some default styles
+  ; Create a tree view control with some default styles.
 
     !define TV_CREATE "nsDialogs::CreateControl ${__TV_CLASS} ${__TV_DEF_STYLES} ${__TV_DEF_EXSTYLES}"
 
@@ -80,11 +85,12 @@
   ; TV_INSERT_ITEM
   ; The handle of the item inserted is returned in the stack.
 
-    !macro __CALL_TV_INSERT_ITEM hwndTV parentItem pszText
+    !macro __CALL_TV_INSERT_ITEM hwndTV parentItem name desc
 
       Push "${hwndTV}"
       Push "${parentItem}"
-      Push "${pszText}"
+      Push "${name}"
+      Push "${desc}"
 
       ${CallArtificialFunction} __TV_INSERT_ITEM
 
@@ -95,21 +101,31 @@
       ; It is first stored the $0-$9 and $R0-$R9 registers to the System's
       ; private stack, so that the original data is not overriden.
       ; Then, the arguments are popped from the global stack, which are
-      ; pszText ($2), parentItem ($1) and hwndTV ($0).
-      System::Store Sr2r1r0
+      ; desc ($3), name ($2), parentItem ($1) and hwndTV ($0).
+      System::Store Sr3r2r1r0
+
+      ; Set the maximum length of the string values
+      StrCpy $2 $2 ${__TVI_MAX_TEXT}
+      StrCpy $3 $3 ${__TVI_MAX_DESC}
+
+      ; Allocate a buffer to set the item description. This pointer
+      ; is then stored in the lParam parameter, so that it can be
+      ; retrieved from the TVN_GETINFOTIP notification.
+      System::Call "*(&t${__TVI_MAX_DESC_NT} r3) i .R0"
 
       ; Allocate a TVINSERTSTRUCT structure which contains info for inserting a
       ; new item to the TV. The TVITEM parameter is required to specify the
-      ; attributes of the TV item to add. As only the flag TVIF_TEXT is specified,
-      ; just the pszText and cchTextMax members must be set in the structure.
-      System::Call "*(i r1, i ${TVI_SORT}, i ${TVIF_TEXT}, i, i, i, t r2, i ${__TVI_MAX_TEXT}, i, i, i, i) i .R0"
+      ; attributes of the TV item to add. As only the flags TVIF_TEXT and
+      ; TVIF_PARAM are specified, just the pszText, cchTextMax and lParam members
+      ; must be set in the structure.
+      System::Call "*(i r1, i ${TVI_SORT}, i ${TVIF_TEXT}|${TVIF_PARAM}, i, i, i, t r2, i ${__TVI_MAX_TEXT_NT}, i, i, i, i R0) i .R1"
 
       ; Insert a new item to the tree view and push the handle
-      SendMessage $0 ${TVM_INSERTITEM} 0 $R0 $3
-      Push $3
+      SendMessage $0 ${TVM_INSERTITEM} 0 $R1 $4
+      Push $4
 
       ; Free the TVINSERTSTRUCT structure allocated
-      System::Free $R0
+      System::Free $R1
 
       ; Restore the original values of the registers
       System::Store L
@@ -137,10 +153,10 @@
       System::Store Sr1r0
 
       ; Allocate a buffer to store the item text
-      System::Call "*(&t${__TVI_MAX_TEXT}) i .R0"
+      System::Call "*(&t${__TVI_MAX_TEXT_NT}) i .R0"
 
       ; A TVITEM structure where the item handle is specified
-      System::Call "*(i ${TVIF_TEXT}|${TVIF_HANDLE}, i r1, i, i, i R0, i ${__TVI_MAX_TEXT}, i, i, i, i) i .R1"
+      System::Call "*(i ${TVIF_TEXT}|${TVIF_HANDLE}, i r1, i, i, i R0, i ${__TVI_MAX_TEXT_NT}, i, i, i, i) i .R1"
 
       ; Send the TVM_GETITEM message to get the pszText parameter
       SendMessage $0 ${TVM_GETITEM} 0 $R1
@@ -214,3 +230,31 @@
     !macroend
 
     !define TV_SET_ITEM_CHECK "!insertmacro __CALL_TV_SET_ITEM_CHECK"
+
+  ;--------------------------------
+  ; TV_GET_COUNT
+  ; The number of tree view items is returned in the stack.
+
+    !macro __CALL_TV_GET_COUNT hwndTV
+
+      Push "${hwndTV}"
+
+      ${CallArtificialFunction} __TV_GET_COUNT
+
+    !macroend
+
+    !macro __TV_GET_COUNT
+
+      ; hwndTV ($0)
+      System::Store Sr0
+
+      ; Count of the items in the tree view control
+      SendMessage $0 ${TVM_GETCOUNT} 0 0 $1
+      Push $1
+
+      ; Restore the original values of the registers
+      System::Store L
+
+    !macroend
+
+    !define TV_GET_COUNT "!insertmacro __CALL_TV_GET_COUNT"
