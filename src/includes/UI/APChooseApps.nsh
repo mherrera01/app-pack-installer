@@ -108,11 +108,20 @@
       ${If} $1 = ${NM_TVSTATEIMAGECHANGING}
 
         ; Read the new item state from the NMTVSTATEIMAGECHANGING structure
-        System::Call "*$2(i, i, i, i, i, i .R0)"
+        System::Call "*$2(i, i, i, i, i .R0, i .R1)"
 
-        ${If} $R0 = 2 ; Checked
+        ; When selecting the tree view elements with the keyboard,
+        ; their image states can change with the space key. Even if
+        ; an item does not have a checkbox (state = 0), one appears,
+        ; leading to undesired behaviour.
+        ${If} $R0 == 0
+          ; Prevent the item state change
+          ${NSD_Return} 1
+        ${EndIf}
+
+        ${If} $R1 = 2 ; Checked
           IntOp $currentAppsSelectedCAP $currentAppsSelectedCAP + 1
-        ${ElseIf} $R0 = 1 ; Unchecked
+        ${ElseIf} $R1 = 1 ; Unchecked
           IntOp $currentAppsSelectedCAP $currentAppsSelectedCAP - 1
         ${EndIf}
 
