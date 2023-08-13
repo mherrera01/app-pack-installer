@@ -17,7 +17,7 @@
     ; Add the common files of the installer
     File "..\LICENSE"
     File "..\README.md"
-    File "..\Icon.ico"
+    File ".\icons\AppPack.ico"
     
     ;--------------------------------
     ; The registry keys are stored under the WOW6432Node directory (32 bits)
@@ -29,7 +29,7 @@
     ; Create registry keys in the local machine for uninstalling
     WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayName" "${PRODUCT_NAME}"
     WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-    WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayIcon" '"$INSTDIR\Icon.ico"'
+    WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayIcon" '"$INSTDIR\AppPack.ico"'
     WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "Publisher" "Miguel Herrera"
     WriteRegStr HKLM "${UN_REGISTRY_DIR}\${PRODUCT_NAME}" "DisplayVersion" "${PRODUCT_VERSION}"
 
@@ -52,13 +52,13 @@
     SetOutPath "$INSTDIR"
 
     ; https://nsis-dev.github.io/NSIS-Forums/html/t-333450.html
-    ${ForEach} $R1 0 $jsonCountAppsVBP + 1
+    /*${ForEach} $R1 0 $jsonCountAppsVBP + 1
 
       ; Download the setup executable
       NScurl::http GET "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe" \
         "$INSTDIR\Apps\wix311.exe" /TIMEOUT 30s /END
 
-    ${Next}
+    ${Next}*/
 
   SectionEnd
 
@@ -77,7 +77,7 @@
     ; Delete common files and the uninstaller
     Delete "$INSTDIR\LICENSE"
     Delete "$INSTDIR\README.md"
-    Delete "$INSTDIR\Icon.ico"
+    Delete "$INSTDIR\AppPack.ico"
     Delete "$INSTDIR\Uninstall.exe"
     
     ; Remove the installation folder

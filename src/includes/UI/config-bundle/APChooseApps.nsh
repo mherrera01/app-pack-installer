@@ -1,8 +1,6 @@
 ; File: APChooseApps.nsh
 ; Author: Miguel Herrera
 
-!include "TreeViewControl.nsh"
-
 !macro AP_DEFINE_UI_CHOOSE_APPS_PAGE
 
   ;--------------------------------
@@ -36,7 +34,7 @@
         properly connected to the internet and click Next to continue."
       Pop $0
 
-      ${NSD_CreateCheckBox} 0% 17% 5% 6% ""
+      ${NSD_CreateCheckBox} 0% 17% 4% 6% ""
       Pop $0
 
       ${NSD_CreateLabel} 5% 17% 95% 12u "Manually manage each app setup \
@@ -144,12 +142,10 @@
           ; Show the item name if there is no description
           ${TV_GET_ITEM_TEXT} $appsTreeViewCAP $R0
           Pop $3
-          ${NSD_SetText} $appDescInfoCAP "$3."
 
-        ${Else}
-          ${NSD_SetText} $appDescInfoCAP "$3"
         ${EndIf}
 
+        ${NSD_SetText} $appDescInfoCAP "$3"
         EnableWindow $appDescInfoCAP 1
 
       ${EndIf}

@@ -1,9 +1,9 @@
 ; File: APCoreUI.nsh
 ; Author: Miguel Herrera
 
+!include "TreeViewControl.nsh"
 !include "APChooseBundle.nsh"
-!include "APValidateBundle.nsh"
-!include "APChooseApps.nsh"
+!include "config-bundle\APConfigBundle.nsh"
 
 !macro AP_SET_UI_SETTINGS
 
@@ -11,8 +11,8 @@
   !define MUI_ABORTWARNING
 
   ; Display customized icon
-  !define MUI_ICON "..\Icon.ico"
-  !define MUI_UNICON "..\Icon.ico"
+  !define MUI_ICON ".\icons\AppPack.ico"
+  !define MUI_UNICON ".\icons\AppPack.ico"
 
   ; Display customized text in the welcome page
   !define MUI_WELCOMEPAGE_TEXT "Setup will guide you through the \
@@ -35,9 +35,8 @@
   !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
   ; Custom pages
-  Page custom chooseAppsPage chooseAppsPageLeave /ENABLECANCEL
+  Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
   Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
-  Page custom validateBundlePage validateBundlePageLeave /ENABLECANCEL
 
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
@@ -61,7 +60,6 @@
 !macro AP_DEFINE_UI_CUSTOM_PAGES
 
   !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
-  !insertmacro AP_DEFINE_UI_VALIDATE_BUNDLE_PAGE
-  !insertmacro AP_DEFINE_UI_CHOOSE_APPS_PAGE
+  !insertmacro AP_DEFINE_UI_CONFIG_BUNDLE_PAGE
 
 !macroend

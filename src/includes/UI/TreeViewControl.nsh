@@ -51,16 +51,16 @@
 !define TVIS_CHECKED        0x2000
 !define TVIS_STATEIMAGEMASK 0xF000
 
-!define TVGN_ROOT               0x0000
-!define TVGN_NEXT               0x0001
-!define TVGN_PREVIOUS           0x0002
-!define TVGN_PARENT             0x0003
-!define TVGN_CHILD              0x0004
-!define TVGN_FIRSTVISIBLE       0x0005
-!define TVGN_NEXTVISIBLE        0x0006
-!define TVGN_PREVIOUSVISIBLE    0x0007
-!define TVGN_DROPHILITE         0x0008
-!define TVGN_CARET              0x0009
+!define TVGN_ROOT            0x0000
+!define TVGN_NEXT            0x0001
+!define TVGN_PREVIOUS        0x0002
+!define TVGN_PARENT          0x0003
+!define TVGN_CHILD           0x0004
+!define TVGN_FIRSTVISIBLE    0x0005
+!define TVGN_NEXTVISIBLE     0x0006
+!define TVGN_PREVIOUSVISIBLE 0x0007
+!define TVGN_DROPHILITE      0x0008
+!define TVGN_CARET           0x0009
 
 ;--------------------------------
 ; Interface
@@ -71,7 +71,7 @@
   !define /math __TVI_MAX_DESC_NT ${__TVI_MAX_DESC} + 1
 
   !define __TV_CLASS SysTreeView32
-  !define __TV_DEF_STYLES ${WS_CHILD}|${WS_VISIBLE}|${WS_BORDER}|${WS_TABSTOP}|\
+  !define __TV_DEF_STYLES ${WS_CHILD}|${WS_VISIBLE}|${WS_BORDER}|${WS_TABSTOP}|${WS_CLIPSIBLINGS}|\
     ${TVS_HASBUTTONS}|${TVS_HASLINES}|${TVS_LINESATROOT}|${TVS_DISABLEDRAGDROP}|${TVS_INFOTIP}
   !define __TV_DEF_EXSTYLES 0
 

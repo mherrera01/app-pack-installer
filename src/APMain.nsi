@@ -13,8 +13,8 @@
   !addincludedir ".\includes"
   !addincludedir ".\includes\UI"
 
-  !include "APSections.nsh"
-  !include "APCoreUI.nsh"
+  !include "includes\APSections.nsh"
+  !include "includes\UI\APCoreUI.nsh"
 
 ;--------------------------------
 ; Defines

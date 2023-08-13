@@ -135,7 +135,7 @@
           JSON file and, hence, malicious code could be executed."
         Pop $0
 
-        ${NSD_CreateCheckBox} 14% 64% 5% 6% ""
+        ${NSD_CreateCheckBox} 14% 64% 4% 6% ""
         Pop $trustCustomBundleCheckVBP
         ${NSD_OnClick} $trustCustomBundleCheckVBP onCheckBoxClick
 
