@@ -115,11 +115,8 @@
       ; Required for storing temporal files created by the installer
       InitPluginsDir
 
-      ; Extract the UI icons required by the custom pages
-      Call extractCustomIconsUI
-
-      ; Set the default values of the first custom page displayed
-      Call setDefaultUIValuesCBP
+      ; Perform some initializations for the UI custom pages
+      Call initCustomPagesUI
 
   FunctionEnd
 

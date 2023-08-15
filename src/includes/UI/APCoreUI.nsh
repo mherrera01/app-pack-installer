@@ -60,26 +60,50 @@
 ;--------------------------------
 ; Custom pages
 
-!macro AP_DEFINE_UI_CUSTOM_PAGES
+  !macro AP_SET_UI_COUNT_LIMIT elemUI value
 
-  Function extractCustomIconsUI
+    ; Not to show more than 3 digits in a text UI component
+    ; that displays a variable number
+    StrLen $0 ${value}
+    ${If} $0 > 3
+      ${NSD_SetText} ${elemUI} "999+"
+    ${Else}
+      ${NSD_SetText} ${elemUI} "${value}"
+    ${EndIf}
 
-    ; Extract the UI icons required by the custom pages to the
-    ; temp dir ($PLUGINSDIR).
-    ;
-    ; The icons are retrieved from the MDI library:
-    ; https://pictogrammers.com/library/mdi/
-    ;
-    ; Then the icons are converted to the corresponding ICO
-    ; format using ImageMagick.
-    ; $> magick convert image.png -define icon:auto-resize="64,32,24,16" icon.ico
-    File "/oname=$PLUGINSDIR\bundle.ico" ".\icons\bundle.ico"
-    File "/oname=$PLUGINSDIR\choose-apps.ico" ".\icons\choose-apps.ico"
-    File "/oname=$PLUGINSDIR\select-step.ico" ".\icons\select-step.ico"
+  !macroend
 
-  FunctionEnd
+  !macro AP_DEFINE_UI_CUSTOM_PAGES
 
-  !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
-  !insertmacro AP_DEFINE_UI_CONFIG_BUNDLE_PAGE
+    Var boldFontText
 
-!macroend
+    !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
+    !insertmacro AP_DEFINE_UI_CONFIG_BUNDLE_PAGE
+
+    Function initCustomPagesUI
+
+      ;--------------------------------
+      ; Extract the UI icons required by the custom pages to the
+      ; temp dir ($PLUGINSDIR)
+
+        ; The icons are retrieved from the MDI library:
+        ; https://pictogrammers.com/library/mdi/
+        ;
+        ; Then the icons are converted to the corresponding ICO
+        ; format using ImageMagick.
+        ; $> magick convert image.png -define icon:auto-resize="64,32,24,16" icon.ico
+        SetOutPath "$PLUGINSDIR\icons"
+        File ".\icons\*.ico*"
+
+        ; Set the default $OUTDIR, as SetOutPath locks the temp dir
+        SetOutPath "-"
+
+      ; Create a bold font to highlight a text
+      CreateFont $boldFontText "Microsoft Sans Serif" "8.25" "700"
+
+      ; Set the default values of the first custom page displayed
+      Call setDefaultUIValuesCBP
+
+    FunctionEnd
+
+  !macroend

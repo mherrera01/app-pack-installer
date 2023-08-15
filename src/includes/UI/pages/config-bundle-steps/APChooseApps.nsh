@@ -75,12 +75,16 @@
     Function toggleVisibilityUICAS
 
       ; Show (SW_SHOW) or hide (SW_HIDE) the UI components
-      Pop $0
+      System::Store Sr0
+
       ShowWindow $appsTreeViewCAS $0
       ShowWindow $appDescBoxCAS $0
       ShowWindow $appDescInfoCAS $0
       ShowWindow $appsSelectedInfoCAS $0
       ShowWindow $appsSelectedDataCAS $0
+
+      ; Restore the original values of the registers
+      System::Store L
 
     FunctionEnd
 
@@ -119,7 +123,7 @@
         ${EndIf}
 
         ; Update the apps selected UI
-        ${NSD_SetText} $appsSelectedDataCAS "$currentAppsSelectedCAS"
+        !insertmacro AP_SET_UI_COUNT_LIMIT $appsSelectedDataCAS $currentAppsSelectedCAS
 
       ; With the TVS_INFOTIP applied, the cursor is over an item
       ${ElseIf} $1 = ${TVN_GETINFOTIP}
