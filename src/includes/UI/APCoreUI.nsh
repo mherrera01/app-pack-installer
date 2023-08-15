@@ -2,8 +2,11 @@
 ; Author: Miguel Herrera
 
 !include "TreeViewControl.nsh"
-!include "APChooseBundle.nsh"
-!include "config-bundle\APConfigBundle.nsh"
+
+!include "pages\APChooseBundle.nsh"
+!include "pages\config-bundle-steps\APValidateBundle.nsh"
+!include "pages\config-bundle-steps\APChooseApps.nsh"
+!include "pages\APConfigBundle.nsh"
 
 !macro AP_SET_UI_SETTINGS
 
@@ -58,6 +61,23 @@
 ; Custom pages
 
 !macro AP_DEFINE_UI_CUSTOM_PAGES
+
+  Function extractCustomIconsUI
+
+    ; Extract the UI icons required by the custom pages to the
+    ; temp dir ($PLUGINSDIR).
+    ;
+    ; The icons are retrieved from the MDI library:
+    ; https://pictogrammers.com/library/mdi/
+    ;
+    ; Then the icons are converted to the corresponding ICO
+    ; format using ImageMagick.
+    ; $> magick convert image.png -define icon:auto-resize="64,32,24,16" icon.ico
+    File "/oname=$PLUGINSDIR\bundle.ico" ".\icons\bundle.ico"
+    File "/oname=$PLUGINSDIR\choose-apps.ico" ".\icons\choose-apps.ico"
+    File "/oname=$PLUGINSDIR\select-step.ico" ".\icons\select-step.ico"
+
+  FunctionEnd
 
   !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
   !insertmacro AP_DEFINE_UI_CONFIG_BUNDLE_PAGE

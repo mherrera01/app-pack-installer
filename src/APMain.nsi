@@ -13,8 +13,8 @@
   !addincludedir ".\includes"
   !addincludedir ".\includes\UI"
 
-  !include "includes\APSections.nsh"
-  !include "includes\UI\APCoreUI.nsh"
+  !include "APSections.nsh"
+  !include "APCoreUI.nsh"
 
 ;--------------------------------
 ; Defines
@@ -114,6 +114,9 @@
       ; Initialize the $PLUGINSDIR keyword which points to %temp%\nsxXXXX.tmp\
       ; Required for storing temporal files created by the installer
       InitPluginsDir
+
+      ; Extract the UI icons required by the custom pages
+      Call extractCustomIconsUI
 
       ; Set the default values of the first custom page displayed
       Call setDefaultUIValuesCBP
