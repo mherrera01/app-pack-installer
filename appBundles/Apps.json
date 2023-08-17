@@ -1,12 +1,13 @@
 {
     "appGroups": [
         {
-            "groupName": "IT",
+            "groupName": "Browsers",
+            "groupDesc": "Access to websites.",
             "apps": [
                 {
-                    "name": "WiX v3 Toolset",
-                    "description": "The WiX toolset lets developers create installers for Windows.",
-                    "setupURL": "https://github.com/wixtoolset/wix3/releases/latest/download/wix311.exe"
+                    "name": "Firefox",
+                    "description": "Firefox is a free open-source browser whose development is overseen by the Mozilla Corporation.",
+                    "setupURL": "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64"
                 }
             ]
         }

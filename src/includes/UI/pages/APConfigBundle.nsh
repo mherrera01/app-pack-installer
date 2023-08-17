@@ -5,7 +5,7 @@
 
   ${If} ${Errors}
     Push "The JSON field '${jsonField}' is missing/misplaced."
-    Call updateJsonValidationUICFBP
+    Call updateJsonValidationUIVBS
     ClearErrors
     Return
   ${EndIf}
@@ -18,14 +18,16 @@
   ; CFBP (ConFig Bundle Page) variables
 
     Var dialogCFBP
+    Var backButtonCFBP
+    Var nextButtonCFBP
 
-    ; Validate bundle step
+    ; First step menu
     Var vbStepIconCFBP
     Var vbStepButtonCFBP
     Var vbFirstStepInfoCFBP
     Var vbStepInfoCFBP
 
-    ; Choose apps step
+    ; Second step menu
     Var caStepIconCFBP
     Var caStepButtonCFBP
     Var caSecondStepInfoCFBP
@@ -36,14 +38,49 @@
     Var vbStepSelectorCFBP
     Var caStepSelectorCFBP
 
-    Var backButtonCFBP
-    Var nextButtonCFBP
+    ;--------------------------------
+    ; Validate bundle step
 
-  ;--------------------------------
-  ; Variables for the steps UI
+      ; Default bundle UI handlers
+      Var downloadStatusInfoVBS
+      Var retryDownloadButtonVBS
+      Var downloadProgressBarVBS
+      Var disclaimerLabelInfoVBS
+      Var disclaimerInfoVBS
 
-    !insertmacro AP_DEFINE_UI_VALIDATE_BUNDLE_VARS
-    !insertmacro AP_DEFINE_UI_CHOOSE_APPS_VARS
+      ; Custom bundle UI handlers
+      Var warningLabelInfoVBS
+      Var warningInfoVBS
+      Var trustCustomBundleCheckVBS
+      Var trustCustomBundleInfoVBS
+
+      ; HTTP download ID
+      Var downloadDefBundleIdVBS
+
+      ; JSON validation UI handlers
+      Var jsonValidationBoxVBS
+      Var appGroupsLabelInfoVBS
+      Var appGroupsInfoVBS
+      Var appsLabelInfoVBS
+      Var appsInfoVBS
+      Var vLineValidationVBS
+      Var validationStatusInfoVBS
+      Var validationMsgInfoVBS
+
+      ; JSON values
+      Var jsonCountAppGroupsVBS
+      Var jsonCountAppsVBS
+
+    ;--------------------------------
+    ; Choose apps step
+
+      Var appsTreeViewCAS
+      Var appDescBoxCAS
+      Var appDescInfoCAS
+
+      Var appsSelectedInfoCAS
+      Var appsSelectedDataCAS
+      Var currentAppsSelectedCAS
 
   ;--------------------------------
   ; Main functions triggered on custom page creation and disposal
@@ -69,7 +106,7 @@
       GetDlgItem $backButtonCFBP $HWNDPARENT 3
 
       ;--------------------------------
-      ; First step UI menu
+      ; First step menu UI
 
         ${NSD_CreateLabel} 0% 1% 3% 12u "1."
         Pop $vbFirstStepInfoCFBP
@@ -94,7 +131,7 @@
       Pop $0
 
       ;--------------------------------
-      ; Second step UI menu
+      ; Second step menu UI
 
         System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\choose-apps.ico', \
           i ${IMAGE_ICON}, i 22, i 22, i ${LR_LOADFROMFILE}) i .s"
@@ -143,16 +180,62 @@
           ; UI for the default bundle download
           ${If} $defaultBundleButtonStateCBP == ${BST_CHECKED}
 
-            !insertmacro AP_DEFINE_UI_VB_DEFAULT_CREATION
-            ${NSD_OnClick} $retryDownloadButtonVBS onRetryDownloadCFBP
+            ; The status is set when the download starts
+            ${NSD_CreateLabel} 0% 28% 80% 12u ""
+            Pop $downloadStatusInfoVBS
+
+            ${NSD_CreateButton} 85% 28% 15% 12u "Retry"
+            Pop $retryDownloadButtonVBS
+            ${NSD_OnClick} $retryDownloadButtonVBS onRetryDownloadVBS
+
+            ; Create the progress bar of the bundle download
+            ${NSD_CreateProgressBar} 0% 38% 100% 14u ""
+            Pop $downloadProgressBarVBS
+
+            ; Set the progress bar range from 0 to 100 (percentage)
+            SendMessage $downloadProgressBarVBS ${PBM_SETRANGE32} 0 100
+
+            ; JSON validation UI (starting on 50% in the Y axis)
+            Push 50
+            Call createJsonValidationUIVBS
+
+            ; Disclaimer bold text
+            ${NSD_CreateLabel} 0% 85% 15% 12u "Disclaimer: "
+            Pop $disclaimerLabelInfoVBS
+            SendMessage $disclaimerLabelInfoVBS ${WM_SETFONT} $boldFontText 0
+
+            ${NSD_CreateLabel} 16% 85% 84% 20u "There is no intention \
+              of appropriating any of the application executables used. \
+              All the applications belong to their respective owners."
+            Pop $disclaimerInfoVBS
 
             ; Download the default bundle and update the UI
-            Call httpDefBundleDownloadCFBP
+            Call httpDefBundleDownloadVBS
 
           ${ElseIf} $customBundleButtonStateCBP == ${BST_CHECKED}
 
-            !insertmacro AP_DEFINE_UI_VB_CUSTOM_CREATION
-            ${NSD_OnClick} $trustCustomBundleCheckVBS onTrustBundleClickCFBP
+            ; JSON validation UI (starting on 28% in the Y axis)
+            Push 28
+            Call createJsonValidationUIVBS
+
+            ; Warning bold text
+            ${NSD_CreateLabel} 0% 65% 13% 12u "Warning: "
+            Pop $warningLabelInfoVBS
+            SendMessage $warningLabelInfoVBS ${WM_SETFONT} $boldFontText 0
+
+            ${NSD_CreateLabel} 14% 65% 86% 26u "${PRODUCT_NAME} downloads \
+              and executes the application setups specified in the custom \
+              bundle. No security check is made to the links provided by the \
+              JSON file and, hence, malicious code could be executed."
+            Pop $warningInfoVBS
+
+            ${NSD_CreateCheckBox} 14% 88% 4% 6% ""
+            Pop $trustCustomBundleCheckVBS
+            ${NSD_OnClick} $trustCustomBundleCheckVBS onTrustBundleClickVBS
+
+            ${NSD_CreateLabel} 19% 88% 81% 12u "I trust the custom \
+              bundle source"
+            Pop $trustCustomBundleInfoVBS
 
             ; Disable buttons until the JSON validation is completed
             EnableWindow $caStepButtonCFBP 0
@@ -162,7 +245,7 @@
 
             ; The JSON validation UI is set to the loading status
             Push 0
-            Call updateJsonValidationUICFBP
+            Call updateJsonValidationUIVBS
 
           ${Else}
 
@@ -175,7 +258,37 @@
         ;--------------------------------
         ; Choose apps step
 
-          !insertmacro AP_DEFINE_UI_CHOOSE_APPS_CREATION
+          ; Create tree view for the apps
+          ${TV_CREATE} 0% 30% 60% 65% ""
+          Pop $appsTreeViewCAS
+
+          ; The TVS_CHECKBOXES style must be set after the tree view creation
+          ; with SetWindowLong. Otherwise, as the documentation states, the
+          ; checkboxes might appear unchecked (even if they are explicitly
+          ; checked with the TVM_SETITEM message) depending on timing issues.
+          System::Call "user32::GetWindowLong(i $appsTreeViewCAS, i ${GWL_STYLE}) i .R0"
+          IntOp $R0 ${TVS_CHECKBOXES} | $R0
+          System::Call "user32::SetWindowLong(i $appsTreeViewCAS, i ${GWL_STYLE}, i R0)"
+
+          GetFunctionAddress $0 onTreeViewNotifyCAS
+          nsDialogs::OnNotify $appsTreeViewCAS $0
+
+          ${NSD_CreateGroupBox} 65% 30% 34% 55% "Description"
+          Pop $appDescBoxCAS
+
+            ${NSD_CreateLabel} 67% 40% 30% 40% "Position your mouse over \
+              a component to see its description."
+            Pop $appDescInfoCAS
+
+            ; Grey out the description until the mouse is over an app
+            EnableWindow $appDescInfoCAS 0
+
+          ${NSD_CreateLabel} 67% 88% 20% 12u "Apps selected:"
+          Pop $appsSelectedInfoCAS
+
+          StrCpy $currentAppsSelectedCAS "0"
+          ${NSD_CreateLabel} 90% 88% 7% 12u "$currentAppsSelectedCAS"
+          Pop $appsSelectedDataCAS
 
       ; The validate bundle step is first displayed
       Push 1
@@ -185,7 +298,7 @@
 
         ; Create a thread for validating the custom bundle without
         ; blocking the UI
-        ${Thread_Create} threadCustomBundleCFBP $0
+        ${Thread_Create} threadCustomBundleVBS $0
 
       ${EndIf}
 
@@ -206,7 +319,7 @@
     FunctionEnd
 
   ;--------------------------------
-  ; Helper functions
+  ; Steps menu functions
 
     Function toggleBackNextButtonsCFBP
       
@@ -249,43 +362,136 @@
 
     FunctionEnd
 
+    Function onChangeStepClickCFBP
+
+      ; Get the step button that triggered the event
+      Pop $0
+
+      ; Push 1 to the stack if the first step is selected
+      ; and 0 otherwise
+      ${If} $0 == $vbStepButtonCFBP
+        Push 1
+      ${ElseIf} $0 == $caStepButtonCFBP
+        Push 0
+      ${EndIf}
+
+      Call changeStepUICFBP
+
+    FunctionEnd
+
+  ;--------------------------------
+  ; Validate bundle step functions
+
+    Function toggleVisibilityUIVBS
+
+      ; Show (SW_SHOW) or hide (SW_HIDE) the UI components
+      System::Store Sr0
+
+      ; The UI depends on the bundle selected
+      ${If} $defaultBundleButtonStateCBP == ${BST_CHECKED}
+
+        ShowWindow $downloadStatusInfoVBS $0
+        ShowWindow $retryDownloadButtonVBS $0
+        ShowWindow $downloadProgressBarVBS $0
+        ShowWindow $disclaimerLabelInfoVBS $0
+        ShowWindow $disclaimerInfoVBS $0
+
+      ${ElseIf} $customBundleButtonStateCBP == ${BST_CHECKED}
+
+        ShowWindow $warningLabelInfoVBS $0
+        ShowWindow $warningInfoVBS $0
+        ShowWindow $trustCustomBundleCheckVBS $0
+        ShowWindow $trustCustomBundleInfoVBS $0
+
+      ${EndIf}
+
+      ; The JSON validation UI
+      ShowWindow $jsonValidationBoxVBS $0
+      ShowWindow $appGroupsLabelInfoVBS $0
+      ShowWindow $appGroupsInfoVBS $0
+      ShowWindow $appsLabelInfoVBS $0
+      ShowWindow $appsInfoVBS $0
+      ShowWindow $vLineValidationVBS $0
+      ShowWindow $validationStatusInfoVBS $0
+      ShowWindow $validationMsgInfoVBS $0
+
+      ; Restore the original values of the registers
+      System::Store L
+
+    FunctionEnd
+
+    Function createJsonValidationUIVBS
+
+      ; Get the position in the Y axis (percentage) of the UI
+      ; group box, as a starting point for the rest of the elements
+      Pop $0
+
+      IntOP $1 $0 + 8
+      IntOp $2 $0 + 18
+
+      ${NSD_CreateGroupBox} 0% "$0%" 100% 30% ""
+      Pop $jsonValidationBoxVBS
+
+        ${NSD_CreateLabel} 5% "$1%" 15% 12u "App groups:"
+        Pop $appGroupsLabelInfoVBS
+
+        ${NSD_CreateLabel} 20% "$1%" 10% 12u ""
+        Pop $appGroupsInfoVBS
+
+        ${NSD_CreateLabel} 5% "$2%" 15% 12u "Apps:"
+        Pop $appsLabelInfoVBS
+
+        ${NSD_CreateLabel} 20% "$2%" 10% 12u ""
+        Pop $appsInfoVBS
+
+        ${NSD_CreateVLine} 35% "$1%" 0u 24u ""
+        Pop $vLineValidationVBS
+
+        ${NSD_CreateLabel} 40% "$1%" 55% 12u ""
+        Pop $validationStatusInfoVBS
+
+        ${NSD_CreateLabel} 40% "$2%" 55% 12u ""
+        Pop $validationMsgInfoVBS
+
+    FunctionEnd
+
+    Function httpDefBundleDownloadVBS
+
+      ; Disable the back/next and second step buttons until the
+      ; download is completed
+      EnableWindow $caStepButtonCFBP 0
+      Push 0
+      Call toggleBackNextButtonsCFBP
+
+      ; The JSON validation UI is set to the loading status
+      Push 0
+      Call updateJsonValidationUIVBS
+
+      ; Disable the retry button and set the download status
+      EnableWindow $retryDownloadButtonVBS 0
+      ${NSD_SetText} $downloadStatusInfoVBS "Downloading default bundle..."
+
+      ; Create a timer to update the progress bar of the
+      ; background bundle download (each 1000 ms)
+      ${NSD_CreateTimer} ondownloadProgressBarVBS 1000
+
+      ; Download asynchronously the default app bundle in the %temp% folder
+      NScurl::http GET "${DEFAULT_BUNDLE_JSON_LINK}" \
+        "$PLUGINSDIR\Apps.json" /TIMEOUT 30s /BACKGROUND /END
+
+      ; On background mode, the transfer ID is returned
+      Pop $downloadDefBundleIdVBS
+
+    FunctionEnd
+
     ;--------------------------------
-    ; Validate bundle step functions
+    ; JSON bundle
 
-      Function httpDefBundleDownloadCFBP
-
-        ; Disable the back/next and second step buttons until the
-        ; download is completed
-        EnableWindow $caStepButtonCFBP 0
-        Push 0
-        Call toggleBackNextButtonsCFBP
-
-        ; The JSON validation UI is set to the loading status
-        Push 0
-        Call updateJsonValidationUICFBP
-
-        ; Disable the retry button and set the download status
-        EnableWindow $retryDownloadButtonVBS 0
-        ${NSD_SetText} $downloadStatusInfoVBS "Downloading default bundle..."
-
-        ; Create a timer to update the progress bar of the
-        ; background bundle download (each 1000 ms)
-        ${NSD_CreateTimer} ondownloadProgressBarVBS 1000
-
-        ; Download asynchronously the default app bundle in the %temp% folder
-        NScurl::http GET "${DEFAULT_BUNDLE_JSON_LINK}" \
-          "$PLUGINSDIR\Apps.json" /TIMEOUT 30s /BACKGROUND /END
-
-        ; On background mode, the transfer ID is returned
-        Pop $downloadDefBundleIdVBS
-
-      FunctionEnd
-
-      Function updateJsonValidationUICFBP
+      Function updateJsonValidationUIVBS
 
         ; Get the JSON validation status. 0 for loading, 1 on
         ; success and an error message otherwise
-        Pop $0
+        System::Store Sr0
 
         ; Loading status
         ${If} $0 == 0
@@ -319,26 +525,12 @@
 
         ${EndIf}
 
-      FunctionEnd
-
-      Function validateJsonBundleVBS
-
-        ; Get the JSON bundle location
-        Pop $0
-
-        ; Load the JSON file
-        nsJSON::Set /file "$0"
-        ${If} ${Errors}
-          Push "The JSON bundle could not be opened."
-          Call updateJsonValidationUICFBP
-          ClearErrors
-        ${Else}
-          Call setJsonBundlePropCFBP
-        ${EndIf}
+        ; Restore the original values of the registers
+        System::Store L
 
       FunctionEnd
 
-      Function setJsonBundlePropCFBP
+      Function setJsonBundlePropVBS
 
         ; Count the number of elements in appGroups
         ; The parameter /end must be included to prevent stack corruption
@@ -346,33 +538,58 @@
         Pop $jsonCountAppGroupsVBS
         !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "appGroups"
 
-        IntOp $1 $jsonCountAppGroupsVBS - 1
+        IntOp $R0 $jsonCountAppGroupsVBS - 1
         StrCpy $jsonCountAppsVBS 0
 
         ; Check that all the parameters from the JSON are correct
         ; Iterate through the appGroups list
-        ${ForEach} $R1 0 $1 + 1
+        ${ForEach} $R1 0 $R0 + 1
 
           ; Check if the app group has a name
           nsJSON::Get "appGroups" /index $R1 "groupName" /end
           Pop $0
           !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "groupName"
 
+          ; Get the app group description, if any
+          nsJSON::Get "appGroups" /index $R1 "groupDesc" /end
+          Pop $1
+          ${If} ${Errors}
+            StrCpy $1 ""
+            ClearErrors
+          ${EndIf}
+
+          ; Insert the app group to the tree view
+          ${TV_INSERT_ITEM} $appsTreeViewCAS ${TVI_ROOT} $0 $1
+          Pop $3
+          ${TV_SET_ITEM_CHECK} $appsTreeViewCAS $3 0
+
           nsJSON::Get /count "appGroups" /index $R1 "apps" /end
           Pop $0
           !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "apps"
 
           IntOp $jsonCountAppsVBS $jsonCountAppsVBS + $0
-          IntOp $2 $0 - 1
+          IntOp $R2 $0 - 1
 
           ; Iterate through the apps list
-          ${ForEach} $R2 0 $2 + 1
+          ${ForEach} $R3 0 $R2 + 1
 
-            nsJSON::Get "appGroups" /index $R1 "apps" /index $R2 "name" /end
+            nsJSON::Get "appGroups" /index $R1 "apps" /index $R3 "name" /end
             Pop $0
             !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "name"
 
-            nsJSON::Get "appGroups" /index $R1 "apps" /index $R2 "setupURL" /end
+            nsJSON::Get "appGroups" /index $R1 "apps" /index $R3 "description" /end
+            Pop $1
+            ${If} ${Errors}
+              StrCpy $1 ""
+              ClearErrors
+            ${EndIf}
+
+            ; Insert the app to the group in the tree view
+            ${TV_INSERT_ITEM} $appsTreeViewCAS $3 $0 $1
+            Pop $0
+
+            ; TODO: Add setupURL to lparam
+            nsJSON::Get "appGroups" /index $R1 "apps" /index $R3 "setupURL" /end
             Pop $0
             !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "setupURL"
 
@@ -382,7 +599,7 @@
 
         ; Set a successful JSON validation UI
         Push 1
-        Call updateJsonValidationUICFBP
+        Call updateJsonValidationUIVBS
 
         ; Enable the back button
         EnableWindow $backButtonCFBP 1
@@ -396,121 +613,195 @@
 
       FunctionEnd
 
+      Function validateJsonBundleVBS
+
+        ; Get the JSON bundle location
+        Pop $0
+
+        ; Load the JSON file
+        nsJSON::Set /file "$0"
+        ${If} ${Errors}
+          Push "The JSON bundle could not be opened."
+          Call updateJsonValidationUIVBS
+          ClearErrors
+        ${Else}
+          Call setJsonBundlePropVBS
+        ${EndIf}
+
+      FunctionEnd
+
+    ;--------------------------------
+    ; Events
+
+      Function onRetryDownloadVBS
+
+        ; Empty the stack
+        Pop $0
+
+        ; Retry the default bundle download
+        Call httpDefBundleDownloadVBS
+
+      FunctionEnd
+
+      Function ondownloadProgressBarVBS
+
+        ; Check if an error ocurred during the download
+        NScurl::query /ID $downloadDefBundleIdVBS "@ERROR@"
+        Pop $0
+        ${If} $0 != "OK"
+          ${NSD_KillTimer} ondownloadProgressBarVBS
+
+          ; Cancel the background download that failed
+          NScurl::cancel /ID $downloadDefBundleIdVBS /REMOVE
+
+          ; Display an error download status
+          ${NSD_SetText} $downloadStatusInfoVBS "Download error. Check \
+            your internet connection."
+
+          ; Allow the user to retry the download
+          EnableWindow $retryDownloadButtonVBS 1
+
+          ; The JSON validation cannot be performed
+          Push "The default bundle must be downloaded first."
+          Call updateJsonValidationUIVBS
+          Return
+        ${EndIf}
+
+        ; Get the download status in a formatted string
+        NScurl::query /ID $downloadDefBundleIdVBS "[@PERCENT@%] @OUTFILE@, \
+          @XFERSIZE@ / @FILESIZE@ @ @SPEED@"
+        Pop $0
+
+        ; Display the download status in the UI
+        ${NSD_SetText} $downloadStatusInfoVBS "$0"
+
+        ; Get the download percentage and update progress bar
+        NScurl::query /ID $downloadDefBundleIdVBS "@PERCENT@"
+        Pop $0
+        SendMessage $downloadProgressBarVBS ${PBM_SETPOS} $0 0
+
+        ; Check if the download is complete
+        ${If} $0 == "100"
+          ${NSD_KillTimer} ondownloadProgressBarVBS
+
+          ; Update the download status to 'Completed'
+          ${NSD_SetText} $downloadStatusInfoVBS "Completed"
+
+          ; Create a thread for validating the default bundle without
+          ; blocking the UI
+          ${Thread_Create} threadDefBundleVBS $0
+
+        ${EndIf}
+
+      FunctionEnd
+
+      Function onTrustBundleClickVBS
+
+        ; Empty the stack
+        Pop $0
+
+        ; Enable the second step button only if the user trusts
+        ; the custom bundle
+        ${NSD_GetState} $trustCustomBundleCheckVBS $0
+        EnableWindow $caStepButtonCFBP $0
+
+      FunctionEnd
+
+    ;--------------------------------
+    ; Thread routines
+
+      Function threadDefBundleVBS
+
+        ; Validate the default JSON bundle in a different thread
+        Push "$PLUGINSDIR\Apps.json"
+        Call validateJsonBundleVBS
+
+      FunctionEnd
+
+      Function threadCustomBundleVBS
+
+        ; Validate the bundle provided in the previous page in a different thread
+        Push "$jsonFileInputStateCBP"
+        Call validateJsonBundleVBS
+
+      FunctionEnd
+
   ;--------------------------------
-  ; Event functions
+  ; Choose apps step functions
 
-    Function onChangeStepClickCFBP
+    Function toggleVisibilityUICAS
 
-      ; Get the step button that triggered the event
-      Pop $0
+      ; Show (SW_SHOW) or hide (SW_HIDE) the UI components
+      System::Store Sr0
 
-      ; Push 1 to the stack if the first step is selected
-      ; and 0 otherwise
-      ${If} $0 == $vbStepButtonCFBP
-        Push 1
-      ${ElseIf} $0 == $caStepButtonCFBP
-        Push 0
-      ${EndIf}
+      ShowWindow $appsTreeViewCAS $0
+      ShowWindow $appDescBoxCAS $0
+      ShowWindow $appDescInfoCAS $0
+      ShowWindow $appsSelectedInfoCAS $0
+      ShowWindow $appsSelectedDataCAS $0
 
-      Call changeStepUICFBP
-
-    FunctionEnd
-
-    Function onRetryDownloadCFBP
-
-      ; Empty the stack
-      Pop $0
-
-      ; Retry the default bundle download
-      Call httpDefBundleDownloadCFBP
+      ; Restore the original values of the registers
+      System::Store L
 
     FunctionEnd
 
-    Function onTrustBundleClickCFBP
+    Function onTreeViewNotifyCAS
 
-      ; Empty the stack
-      Pop $0
+      Pop $0 ; UI handle
+      Pop $1 ; Message code
 
-      ; Enable next button only if the user trusts the custom bundle
-      ${NSD_GetState} $trustCustomBundleCheckVBS $0
-      EnableWindow $nextButtonCFBP $0
+      ; A pointer to the NMHDR stucture. For some notification
+      ; messages, this parameter points to a larger structure
+      ; that has the NMHDR structure as its first member.
+      Pop $2
 
-    FunctionEnd
+      ; The item checkbox state has changed
+      ${If} $1 = ${NM_TVSTATEIMAGECHANGING}
 
-    Function ondownloadProgressBarVBS
+        ; Read the new item state from the NMTVSTATEIMAGECHANGING structure
+        System::Call "*$2(i, i, i, i, i .R0, i .R1)"
 
-      ; Check if an error ocurred during the download
-      NScurl::query /ID $downloadDefBundleIdVBS "@ERROR@"
-      Pop $0
-      ${If} $0 != "OK"
-        ${NSD_KillTimer} ondownloadProgressBarVBS
+        ; When selecting the tree view elements with the keyboard,
+        ; their image states can change with the space key. Even if
+        ; an item does not have a checkbox (state = 0), one appears,
+        ; leading to undesired behaviour.
+        ${If} $R0 == 0
+          ; Prevent the item state change
+          ${NSD_Return} 1
+        ${EndIf}
 
-        ; Cancel the background download that failed
-        NScurl::cancel /ID $downloadDefBundleIdVBS /REMOVE
+        ${If} $R1 = 2 ; Checked
+          IntOp $currentAppsSelectedCAS $currentAppsSelectedCAS + 1
+        ${ElseIf} $R1 = 1 ; Unchecked
+          IntOp $currentAppsSelectedCAS $currentAppsSelectedCAS - 1
+        ${EndIf}
 
-        ; Display an error download status
-        ${NSD_SetText} $downloadStatusInfoVBS "Download error. Check \
-          your internet connection."
+        ; Update the apps selected UI
+        !insertmacro AP_SET_UI_COUNT_LIMIT $appsSelectedDataCAS $currentAppsSelectedCAS
 
-        ; Allow the user to retry the download
-        EnableWindow $retryDownloadButtonVBS 1
+      ; With the TVS_INFOTIP applied, the cursor is over an item
+      ${ElseIf} $1 = ${TVN_GETINFOTIP}
 
-        ; The JSON validation cannot be performed
-        Push "The default bundle must be downloaded first."
-        Call updateJsonValidationUICFBP
-        Return
-      ${EndIf}
+        ; Read the item and its description (in lParam) from the
+        ; NMTVGETINFOTIP structure
+        System::Call "*$2(i, i, i, i, i, i .R0, i .R1)"
 
-      ; Get the download status in a formatted string
-      NScurl::query /ID $downloadDefBundleIdVBS "[@PERCENT@%] @OUTFILE@, \
-        @XFERSIZE@ / @FILESIZE@ @ @SPEED@"
-      Pop $0
+        ; Get the description string by using the lparam buffer
+        System::Call "kernel32::lstrcpy(t .r3, i R1)"
 
-      ; Display the download status in the UI
-      ${NSD_SetText} $downloadStatusInfoVBS "$0"
+        ; Check if the item has a description, as it is optional
+        ${If} $3 == ""
 
-      ; Get the download percentage and update progress bar
-      NScurl::query /ID $downloadDefBundleIdVBS "@PERCENT@"
-      Pop $0
-      SendMessage $downloadProgressBarVBS ${PBM_SETPOS} $0 0
+          ; Show the item name if there is no description
+          ${TV_GET_ITEM_TEXT} $appsTreeViewCAS $R0
+          Pop $3
 
-      ; Check if the download is complete
-      ${If} $0 == "100"
-        ${NSD_KillTimer} ondownloadProgressBarVBS
+        ${EndIf}
 
-        ; Update the download status to 'Completed'
-        ${NSD_SetText} $downloadStatusInfoVBS "Completed"
-
-        ; Create a thread for validating the default bundle without
-        ; blocking the UI
-        ${Thread_Create} threadDefBundleCFBP $0
+        ${NSD_SetText} $appDescInfoCAS "$3"
+        EnableWindow $appDescInfoCAS 1
 
       ${EndIf}
-
-    FunctionEnd
-
-  ;--------------------------------
-  ; Functions for the steps UI
-
-    !insertmacro AP_DEFINE_UI_VALIDATE_BUNDLE_FUNC
-    !insertmacro AP_DEFINE_UI_CHOOSE_APPS_FUNC
-
-  ;--------------------------------
-  ; Thread routines
-
-    Function threadDefBundleCFBP
-
-      ; Validate the default JSON bundle in a different thread
-      Push "$PLUGINSDIR\Apps.json"
-      Call validateJsonBundleVBS
-
-    FunctionEnd
-
-    Function threadCustomBundleCFBP
-
-      ; Validate the bundle provided in the previous page in a different thread
-      Push "$jsonFileInputStateCBP"
-      Call validateJsonBundleVBS
 
     FunctionEnd
 

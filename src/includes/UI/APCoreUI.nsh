@@ -4,8 +4,6 @@
 !include "TreeViewControl.nsh"
 
 !include "pages\APChooseBundle.nsh"
-!include "pages\config-bundle-steps\APValidateBundle.nsh"
-!include "pages\config-bundle-steps\APChooseApps.nsh"
 !include "pages\APConfigBundle.nsh"
 
 !macro AP_SET_UI_SETTINGS
@@ -38,8 +36,8 @@
   !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
   ; Custom pages
-  Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
   Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
+  Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
 
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
