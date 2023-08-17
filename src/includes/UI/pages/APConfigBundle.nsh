@@ -23,6 +23,8 @@
 
     ; First step menu
     Var vbStepIconCFBP
+    Var vbOkStepIconCFBP
+    Var vbErrorStepIconCFBP
     Var vbStepButtonCFBP
     Var vbFirstStepInfoCFBP
     Var vbStepInfoCFBP
@@ -116,9 +118,18 @@
           of the app bundle"
         Pop $vbStepInfoCFBP
 
+        ; Load the icons for the different bundle states
         System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle.ico', \
           i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
         Pop $vbStepIconCFBP
+
+        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle-ok.ico', \
+          i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
+        Pop $vbOkStepIconCFBP
+
+        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle-error.ico', \
+          i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
+        Pop $vbErrorStepIconCFBP
 
         ${NSD_CreateButton} 30% 0% 7% 14% ""
         Pop $vbStepButtonCFBP
@@ -313,6 +324,8 @@
 
       ; Free the icons loaded
       System::Call "user32::DestroyIcon(i $vbStepIconCFBP)"
+      System::Call "user32::DestroyIcon(i $vbOkStepIconCFBP)"
+      System::Call "user32::DestroyIcon(i $vbErrorStepIconCFBP)"
       System::Call "user32::DestroyIcon(i $caStepIconCFBP)"
       System::Call "user32::DestroyIcon(i $selectStepIconCFBP)"
 
@@ -523,6 +536,9 @@
           ; Enable the back button
           EnableWindow $backButtonCFBP 1
 
+          ; Set the bundle error icon
+          SendMessage $vbStepButtonCFBP ${BM_SETIMAGE} ${IMAGE_ICON} $vbErrorStepIconCFBP
+
         ${EndIf}
 
         ; Restore the original values of the registers
@@ -603,6 +619,9 @@
 
         ; Enable the back button
         EnableWindow $backButtonCFBP 1
+
+        ; Set the successful bundle icon
+        SendMessage $vbStepButtonCFBP ${BM_SETIMAGE} ${IMAGE_ICON} $vbOkStepIconCFBP
 
         ; Enable the next step/trust bundle button 
         ${If} $customBundleButtonStateCBP == ${BST_CHECKED}
