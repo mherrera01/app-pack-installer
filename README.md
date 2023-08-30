@@ -22,3 +22,5 @@ files from the internet with HTTPS.
 - [NsJSON](https://nsis.sourceforge.io/NsJSON_plug-in): Reads the JSON file that has all
 the information of each application to install.
 - [NsThread](https://nsis.sourceforge.io/NsThread_plug-in): Allows the creation of threads.
+- [NsArray](https://nsis.sourceforge.io/Arrays_in_NSIS#nsArray_plug-in): Enables to
+store and manipulate dynamic sized arrays.
