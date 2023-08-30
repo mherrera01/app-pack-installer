@@ -8,6 +8,7 @@
   !include "nsDialogs.nsh"
   !include "LogicLib.nsh"
   !include "nsThread.nsh"
+  !include "nsArray.nsh"
 
   ; User-defined NSH files
   !addincludedir ".\includes"

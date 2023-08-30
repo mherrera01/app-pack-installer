@@ -1,6 +1,8 @@
 ; File: APConfigBundle.nsh
 ; Author: Miguel Herrera
 
+!define JSON_ITEM_MAX_DESC 192
+
 !macro AP_CHECK_JSON_GET_ERROR_CFBP jsonField
 
   ${If} ${Errors}
@@ -9,6 +11,35 @@
     ClearErrors
     Return
   ${EndIf}
+
+!macroend
+
+!macro AP_ALLOCATE_JSON_ITEM_INFO isApp desc url
+
+  System::Store S
+
+  StrCpy $0 "${desc}" ${JSON_ITEM_MAX_DESC}
+  StrCpy $1 "${url}"
+
+  ; In case the URL string has the same length as the maximum
+  ; allowed by NSIS, it is assumed that the value has been truncated.
+  StrLen $2 $1
+  ${If} $2 == ${NSIS_MAX_STRLEN}
+    StrCpy $1 "The URL is too long. NSIS maximum string length is 1024."
+  ${EndIf}
+
+  ; Allocate a buffer to set the JSON item description and URL.
+  ; The isApp variable indicates whether the JSON item is a app group
+  ; (0) or an app (1). This pointer is then stored in the lParam
+  ; parameter, so that it can be retrieved from the TVN_GETINFOTIP
+  ; notification.
+  System::Call "*(i ${isApp}, t r0, t r1) i .R0"
+  Push $R0
+
+  ; Store the pointer in an array for then deallocating the memory
+  nsArray::Set jsonItemInfoArray $R0
+
+  System::Store L
 
 !macroend
 
@@ -100,12 +131,16 @@
         Quit
       ${EndIf}
 
-      ; Clear the error flag as it is set by the nsJSON functions
+      ; Clear the error flag as it is set by the nsJSON/nsArray functions
       ClearErrors
 
       ; Get the back and next button handlers
       GetDlgItem $nextButtonCFBP $HWNDPARENT 1
       GetDlgItem $backButtonCFBP $HWNDPARENT 3
+
+      ; The back button performs the same operation as the leave
+      ; function, due to the page disposal
+      ${NSD_OnBack} configBundlePageLeave
 
       ;--------------------------------
       ; First step menu UI
@@ -328,6 +363,11 @@
       System::Call "user32::DestroyIcon(i $vbErrorStepIconCFBP)"
       System::Call "user32::DestroyIcon(i $caStepIconCFBP)"
       System::Call "user32::DestroyIcon(i $selectStepIconCFBP)"
+
+      ; Free the memory allocated
+      ${ForEachIn} jsonItemInfoArray $0 $1
+        System::Free $1
+      ${Next}
 
     FunctionEnd
 
@@ -574,6 +614,11 @@
             ClearErrors
           ${EndIf}
 
+          ; Allocate the app group info retrieved from the JSON
+          ; to associate it to the tree view item
+          !insertmacro AP_ALLOCATE_JSON_ITEM_INFO 0 $1 ""
+          Pop $1
+
           ; Insert the app group to the tree view
           ${TV_INSERT_ITEM} $appsTreeViewCAS ${TVI_ROOT} $0 $1
           Pop $3
@@ -600,14 +645,18 @@
               ClearErrors
             ${EndIf}
 
+            nsJSON::Get "appGroups" /index $R1 "apps" /index $R3 "setupURL" /end
+            Pop $2
+            !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "setupURL"
+
+            ; Allocate the app info retrieved from the JSON to associate
+            ; it to the tree view item
+            !insertmacro AP_ALLOCATE_JSON_ITEM_INFO 1 $1 $2
+            Pop $1
+
             ; Insert the app to the group in the tree view
             ${TV_INSERT_ITEM} $appsTreeViewCAS $3 $0 $1
             Pop $0
-
-            ; TODO: Add setupURL to lparam
-            nsJSON::Get "appGroups" /index $R1 "apps" /index $R3 "setupURL" /end
-            Pop $0
-            !insertmacro AP_CHECK_JSON_GET_ERROR_CFBP "setupURL"
 
           ${Next}
 
@@ -801,12 +850,12 @@
       ; With the TVS_INFOTIP applied, the cursor is over an item
       ${ElseIf} $1 = ${TVN_GETINFOTIP}
 
-        ; Read the item and its description (in lParam) from the
+        ; Read the item and its info in lParam from the
         ; NMTVGETINFOTIP structure
         System::Call "*$2(i, i, i, i, i, i .R0, i .R1)"
 
         ; Get the description string by using the lparam buffer
-        System::Call "kernel32::lstrcpy(t .r3, i R1)"
+        System::Call "*$R1(i, t .r3, t)"
 
         ; Check if the item has a description, as it is optional
         ${If} $3 == ""

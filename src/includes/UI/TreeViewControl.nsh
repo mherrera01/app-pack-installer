@@ -67,8 +67,6 @@
 
   !define __TVI_MAX_TEXT 48
   !define /math __TVI_MAX_TEXT_NT ${__TVI_MAX_TEXT} + 1
-  !define __TVI_MAX_DESC 192
-  !define /math __TVI_MAX_DESC_NT ${__TVI_MAX_DESC} + 1
 
   !define __TV_CLASS SysTreeView32
   !define __TV_DEF_STYLES ${WS_CHILD}|${WS_VISIBLE}|${WS_BORDER}|${WS_TABSTOP}|${WS_CLIPSIBLINGS}|\
@@ -85,12 +83,12 @@
   ; TV_INSERT_ITEM
   ; The handle of the item inserted is returned in the stack.
 
-    !macro __CALL_TV_INSERT_ITEM hwndTV parentItem name desc
+    !macro __CALL_TV_INSERT_ITEM hwndTV parentItem name lparam
 
       Push "${hwndTV}"
       Push "${parentItem}"
       Push "${name}"
-      Push "${desc}"
+      Push "${lparam}"
 
       ${CallArtificialFunction} __TV_INSERT_ITEM
 
@@ -101,24 +99,18 @@
       ; It is first stored the $0-$9 and $R0-$R9 registers to the System's
       ; private stack, so that the original data is not overriden.
       ; Then, the arguments are popped from the global stack, which are
-      ; desc ($3), name ($2), parentItem ($1) and hwndTV ($0).
+      ; lparam ($3), name ($2), parentItem ($1) and hwndTV ($0).
       System::Store Sr3r2r1r0
 
-      ; Set the maximum length of the string values
+      ; Set the maximum length of the item name
       StrCpy $2 $2 ${__TVI_MAX_TEXT}
-      StrCpy $3 $3 ${__TVI_MAX_DESC}
-
-      ; Allocate a buffer to set the item description. This pointer
-      ; is then stored in the lParam parameter, so that it can be
-      ; retrieved from the TVN_GETINFOTIP notification.
-      System::Call "*(&t${__TVI_MAX_DESC_NT} r3) i .R0"
 
       ; Allocate a TVINSERTSTRUCT structure which contains info for inserting a
       ; new item to the TV. The TVITEM parameter is required to specify the
       ; attributes of the TV item to add. As only the flags TVIF_TEXT and
       ; TVIF_PARAM are specified, just the pszText, cchTextMax and lParam members
       ; must be set in the structure.
-      System::Call "*(i r1, i ${TVI_SORT}, i ${TVIF_TEXT}|${TVIF_PARAM}, i, i, i, t r2, i ${__TVI_MAX_TEXT_NT}, i, i, i, i R0) i .R1"
+      System::Call "*(i r1, i ${TVI_SORT}, i ${TVIF_TEXT}|${TVIF_PARAM}, i, i, i, t r2, i ${__TVI_MAX_TEXT_NT}, i, i, i, i r3) i .R1"
 
       ; Insert a new item to the tree view and push the handle
       SendMessage $0 ${TVM_INSERTITEM} 0 $R1 $4
