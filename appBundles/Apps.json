@@ -8,6 +8,11 @@
                     "name": "Firefox",
                     "description": "Firefox is a free open-source browser whose development is overseen by the Mozilla Corporation.",
                     "setupURL": "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64"
+                },
+                {
+                    "name": "Google Chrome",
+                    "description": "Google Chrome is a cross-platform web browser developed by Google.",
+                    "setupURL": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi"
                 }
             ]
         }

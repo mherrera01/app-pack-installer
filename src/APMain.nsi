@@ -125,11 +125,11 @@
 
     DetailPrint "Installing apps..."
 
-    ; Download the setup executable
-    NScurl::http GET "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64" \
-      "$PLUGINSDIR\apps\firefox.exe" /TIMEOUT 30s /END
+    ; Download the app setup
+    NScurl::http GET "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi" \
+      "$PLUGINSDIR\apps\chrome.msi" /TIMEOUT 30s /END
 
-    ExecWait '"$PLUGINSDIR\apps\firefox.exe"'
+    ExecWait 'msiexec.exe /i "$PLUGINSDIR\apps\chrome.msi"'
     ${If} ${Errors}
       DetailPrint "Error"
       ClearErrors

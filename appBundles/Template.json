@@ -7,12 +7,12 @@
                 {
                     "name": "Application name 1",
                     "description": "Brief description of app1 (optional)",
-                    "setupURL": "URL to the app1 setup executable (.exe)"
+                    "setupURL": "URL to the app1 setup file (.exe or .msi)"
                 },
                 {
                     "name": "Application name 2",
                     "description": "Brief description of app2 (optional)",
-                    "setupURL": "URL to the app2 setup executable (.exe)"
+                    "setupURL": "URL to the app2 setup file (.exe or .msi)"
                 }
             ]
             
