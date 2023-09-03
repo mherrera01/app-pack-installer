@@ -14,7 +14,6 @@
   !addincludedir ".\includes"
   !addincludedir ".\includes\UI"
 
-  !include "APSections.nsh"
   !include "APCoreUI.nsh"
 
 ;--------------------------------
@@ -27,9 +26,6 @@
 
   ; The product version must be numerical with the format X.X.X
   !define PRODUCT_VERSION 1.0.0
-
-  ; Directory where the uninstalling registry keys are stored
-  !define UN_REGISTRY_DIR "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
   ; Links where the app bundles are located
   !define TEMPLATE_JSON_LINK "https://raw.githubusercontent.com/mherrera01/app-pack-installer/develop/appBundles/Template.json"
@@ -49,10 +45,6 @@
   !else
     InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
   !endif
-
-  ; Get installation folder from the machine registry
-  ; If available, the default path is overriden (for update purposes)
-  InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "Path"
 
   ; Request admin privileges for not having problems with the third-party
   ; application setups
@@ -92,32 +84,12 @@
 
   Function .onInit
 
-    ; Clear the error flag as it may be set in ReadRegStr
-    ClearErrors
+    ; Initialize the $PLUGINSDIR keyword which points to %temp%\nsxXXXX.tmp\
+    ; Required for storing temporal files created by the installer
+    InitPluginsDir
 
-    ; Check if there is installer info in the machine registry
-    ReadRegStr $0 HKLM "Software\${PRODUCT_NAME}" "Version"
-
-    ; Continue for a normal installation if no registry key is read
-    ; IfErrors checks and clears the error flag
-    IfErrors continueInst
-
-    ; Ask the user for updating
-    MessageBox MB_YESNO|MB_ICONQUESTION "${PRODUCT_NAME} version $0 is already \
-      installed on your machine.$\nWould you like to update to version ${PRODUCT_VERSION}?" \
-      IDYES continueInst
-    
-    ; Close the installer if the MessageBox returns NO
-    Quit
-
-    continueInst:
-
-      ; Initialize the $PLUGINSDIR keyword which points to %temp%\nsxXXXX.tmp\
-      ; Required for storing temporal files created by the installer
-      InitPluginsDir
-
-      ; Perform some initializations for the UI custom pages
-      Call initCustomPagesUI
+    ; Perform some initializations for the UI custom pages
+    Call initCustomPagesUI
 
   FunctionEnd
 
@@ -146,17 +118,21 @@
 ;--------------------------------
 ; Sections
 
-  ; The common files and the uninstaller are installed by default
-  !insertmacro AP_INSERT_INSTALLER_SECTION
+  Section
 
-  ;--------------------------------
-  ; Optional apps to install, divided by groups
+    ; Clear the error flag as it is set by ExecWait
+    ClearErrors
 
-    SectionGroup "IT"
+    DetailPrint "Installing apps..."
 
-      !insertmacro AP_INSERT_APP_SECTION "WiX v3 Toolset" "SEC_WiXv3"
+    ; Download the setup executable
+    NScurl::http GET "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64" \
+      "$PLUGINSDIR\apps\firefox.exe" /TIMEOUT 30s /END
 
-    SectionGroupEnd
+    ExecWait '"$PLUGINSDIR\apps\firefox.exe"'
+    ${If} ${Errors}
+      DetailPrint "Error"
+      ClearErrors
+    ${EndIf}
 
-  ; Uninstall section
-  !insertmacro AP_INSERT_UNINSTALL_SECTION
+  SectionEnd

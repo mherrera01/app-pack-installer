@@ -13,7 +13,6 @@
 
   ; Display customized icon
   !define MUI_ICON ".\icons\AppPack.ico"
-  !define MUI_UNICON ".\icons\AppPack.ico"
 
   ; Display customized text in the welcome page
   !define MUI_WELCOMEPAGE_TEXT "Setup will guide you through the \
@@ -41,11 +40,6 @@
 
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
-  
-  ; Pages in the uninstaller
-  !insertmacro MUI_UNPAGE_WELCOME
-  !insertmacro MUI_UNPAGE_CONFIRM
-  !insertmacro MUI_UNPAGE_INSTFILES
 
 !macroend
 

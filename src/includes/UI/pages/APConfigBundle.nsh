@@ -29,7 +29,7 @@
   ${EndIf}
 
   ; Allocate a buffer to set the JSON item description and URL.
-  ; The isApp variable indicates whether the JSON item is a app group
+  ; The isApp variable indicates whether the JSON item is an app group
   ; (0) or an app (1). This pointer is then stored in the lParam
   ; parameter, so that it can be retrieved from the TVN_GETINFOTIP
   ; notification.
@@ -687,6 +687,8 @@
         Pop $0
 
         ; Load the JSON file
+        ; TODO: Fix unicode. Use an older version?
+        ; https://forums.winamp.com/forum/developer-center/nsis-discussion/301659-nsjson-plug-in?p=4339815#post4339815
         nsJSON::Set /file "$0"
         ${If} ${Errors}
           Push "The JSON bundle could not be opened."
