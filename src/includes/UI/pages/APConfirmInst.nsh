@@ -8,6 +8,8 @@
 
     Var dialogCIP
 
+    Var drivesDropListCIP
+
   ;--------------------------------
   ; Main functions triggered on custom page creation and disposal
 
@@ -30,14 +32,26 @@
       GetDlgItem $0 $HWNDPARENT 1
       ${NSD_SetText} $0 "Install"
 
-      ${NSD_CreateComboBox} 0% 0% 30% 50% ""
-      Pop $0
-      
+      ${NSD_CreateDropList} 0% 0% 30% 50% ""
+      Pop $drivesDropListCIP
+
+      ${GetDrives} "ALL" getDrivesInfo
+
       nsDialogs::Show
 
     FunctionEnd
 
     Function confirmInstPageLeave
+    FunctionEnd
+
+  ;--------------------------------
+  ; Helper functions
+
+    Function getDrivesInfo
+
+      ${NSD_CB_AddString} $drivesDropListCIP "$9"
+	    Push $0
+
     FunctionEnd
 
 !macroend
