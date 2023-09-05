@@ -5,6 +5,7 @@
 
 !include "pages\APChooseBundle.nsh"
 !include "pages\APConfigBundle.nsh"
+!include "pages\APConfirmInst.nsh"
 
 !macro AP_SET_UI_SETTINGS
 
@@ -37,8 +38,8 @@
   ; Custom pages
   Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
   Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
+  Page custom confirmInstPage confirmInstPageLeave /ENABLECANCEL
 
-  !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
 
 !macroend
@@ -71,6 +72,7 @@
 
     !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
     !insertmacro AP_DEFINE_UI_CONFIG_BUNDLE_PAGE
+    !insertmacro AP_DEFINE_UI_CONFIRM_INST_PAGE
 
     Function initCustomPagesUI
 

@@ -129,6 +129,8 @@
     NScurl::http GET "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi" \
       "$PLUGINSDIR\apps\chrome.msi" /TIMEOUT 30s /END
 
+    ; It works, but if Google Chrome is already installed, an error is returned.
+    ; TODO: Check how to handle the different error codes.
     ExecWait 'msiexec.exe /i "$PLUGINSDIR\apps\chrome.msi"'
     ${If} ${Errors}
       DetailPrint "Error"
