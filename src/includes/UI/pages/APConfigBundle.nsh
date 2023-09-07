@@ -687,8 +687,10 @@
         Pop $0
 
         ; Load the JSON file
-        ; TODO: Fix unicode. Use an older version?
-        ; https://forums.winamp.com/forum/developer-center/nsis-discussion/301659-nsjson-plug-in?p=4339815#post4339815
+        ; TODO: nsJSON cannot read UTF-8 files in unicode. Nevertheless,
+        ; UTF-16 encoding is allowed, so maybe converting UTF-8 to UTF-16
+        ; could be a workaround:
+        ; https://nsis.sourceforge.io/Unicode_plug-in
         nsJSON::Set /file "$0"
         ${If} ${Errors}
           Push "The JSON bundle could not be opened."
