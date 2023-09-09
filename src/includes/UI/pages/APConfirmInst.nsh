@@ -12,9 +12,16 @@
     Var firstDriveDetectedCIP
     Var drivesDropListCIP
 
+    Var diskDriveIconCIP
+    Var diskDriveTypeCIP
     Var driveSpaceBarCIP
+    Var usedSpacePctInfoCIP
     Var freeSpaceInfoCIP
     Var totalSpaceInfoCIP
+
+    Var impNoteIconCIP
+    Var driveSpaceNoteCIP
+    Var driveSpaceInfoCIP
 
   ;--------------------------------
   ; Main functions triggered on custom page creation and disposal
@@ -38,53 +45,86 @@
       ; function, due to the page disposal
       ${NSD_OnBack} confirmInstPageLeave
 
-      ${NSD_CreateDropList} 0% 0% 20% 14u ""
-      Pop $drivesDropListCIP
-      ${NSD_OnChange} $drivesDropListCIP onChooseDriveCIP
-
-      ; Set the number of items visible in the drop down list before
-      ; showing a vertical scroll bar
-      SendMessage $drivesDropListCIP ${CB_SETMINVISIBLE} 5 0
-
-      ; Get all the hard disk drives of the computer
-      StrCpy $nDrivesCIP 0
-      StrCpy $firstDriveDetectedCIP ""
-      ${GetDrives} "HDD" getDrivesInfoCIP
-
-      ${NSD_CreateProgressBar} 25% 0% 74% 13u ""
-      Pop $driveSpaceBarCIP
-
-      ; The default visual styles of the progress bar must be disabled,
-      ; so that the bar and background colors can be changed
-      System::Call "uxtheme::SetWindowTheme(i $driveSpaceBarCIP, t '', t '')"
-      SendMessage $driveSpaceBarCIP ${PBM_SETBARCOLOR} 0 0x00DAA026
-      SendMessage $driveSpaceBarCIP ${PBM_SETBKCOLOR} 0 0x00FFFFFF
-
-      ; Set the drive space range from 0 to 100 (percentage)
-      SendMessage $driveSpaceBarCIP ${PBM_SETRANGE32} 0 100
-
-      ${NSD_CreateLabel} 25% 13% 75% 20u "Free space:"
+      ${NSD_CreateGroupBox} 0% 0% 100% 45% "Storage information"
       Pop $0
 
-      ${NSD_CreateLabel} 40% 13% 65% 20u ""
-      Pop $freeSpaceInfoCIP
+      ;--------------------------------
+      ; Drive space UI
 
-      ${NSD_CreateLabel} 25% 21% 75% 20u "Total space:"
-      Pop $0
+        ${NSD_CreateLabel} 3% 12% 20% 10u "HDD:"
+        Pop $0
 
-      ${NSD_CreateLabel} 40% 21% 65% 20u ""
-      Pop $totalSpaceInfoCIP
+        ${NSD_CreateDropList} 3% 20% 20% 14u ""
+        Pop $drivesDropListCIP
+        ${NSD_OnChange} $drivesDropListCIP onChooseDriveCIP
 
-      ; Select the first drive found in the drop down list
-      SendMessage $drivesDropListCIP ${CB_SETCURSEL} 0 0
-      Push $firstDriveDetectedCIP
-      Call setDriveSpaceUICIP
+        ; Set the number of items visible in the drop down list before
+        ; showing a vertical scroll bar
+        SendMessage $drivesDropListCIP ${CB_SETMINVISIBLE} 4 0
+
+        ; Get all the hard disk drives of the computer
+        StrCpy $nDrivesCIP 0
+        StrCpy $firstDriveDetectedCIP ""
+        ${GetDrives} "HDD" getDrivesInfoCIP
+
+        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\disk-drive.ico', \
+          i ${IMAGE_ICON}, i 28, i 28, i ${LR_LOADFROMFILE}) i .s"
+        Pop $diskDriveIconCIP
+
+        ${NSD_CreateIcon} 28% 7% 5% 10% ""
+        Pop $diskDriveTypeCIP
+        SendMessage $diskDriveTypeCIP ${STM_SETICON} $diskDriveIconCIP 0
+
+        ${NSD_CreateLabel} 35% 12% 40% 12u ""
+        Pop $totalSpaceInfoCIP
+
+        ${NSD_CreateProgressBar} 28% 21% 69% 11u ""
+        Pop $driveSpaceBarCIP
+
+        ; The default visual styles of the progress bar must be disabled,
+        ; so that the bar and background colors can be changed
+        System::Call "uxtheme::SetWindowTheme(i $driveSpaceBarCIP, t '', t '')"
+        SendMessage $driveSpaceBarCIP ${PBM_SETBARCOLOR} 0 0x00DAA026
+        SendMessage $driveSpaceBarCIP ${PBM_SETBKCOLOR} 0 0x00FFFFFF
+
+        ; Set the drive space range from 0 to 100 (percentage)
+        SendMessage $driveSpaceBarCIP ${PBM_SETRANGE32} 0 100
+
+        ${NSD_CreateLabel} 83% 12% 14% 12u ""
+        Pop $usedSpacePctInfoCIP
+        ${NSD_AddStyle} $usedSpacePctInfoCIP ${SS_RIGHT}
+
+        ${NSD_CreateLabel} 28% 32% 13% 12u "Free space:"
+        Pop $0
+
+        ${NSD_CreateLabel} 42% 32% 32% 12u ""
+        Pop $freeSpaceInfoCIP
+
+        ; Select the first drive found in the drop down list
+        SendMessage $drivesDropListCIP ${CB_SETCURSEL} 0 0
+        Push $firstDriveDetectedCIP
+        Call setDriveSpaceUICIP
+
+      ${NSD_CreateLabel} 0% 48% 88% 20u "Note about disk space"
+      Pop $driveSpaceInfoCIP
+
+      System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\important-note.ico', \
+        i ${IMAGE_ICON}, i 28, i 28, i ${LR_LOADFROMFILE}) i .s"
+      Pop $impNoteIconCIP
+
+      ${NSD_CreateIcon} 90% 48% 5% 10% ""
+      Pop $driveSpaceNoteCIP
+      SendMessage $driveSpaceNoteCIP ${STM_SETICON} $impNoteIconCIP 0
 
       nsDialogs::Show
 
     FunctionEnd
 
     Function confirmInstPageLeave
+
+      ; Free the icons loaded
+      System::Call "user32::DestroyIcon(i $diskDriveIconCIP)"
+
     FunctionEnd
 
   ;--------------------------------
@@ -172,6 +212,7 @@
 
       ; Set the percentage of the occupied drive space
       SendMessage $driveSpaceBarCIP ${PBM_SETPOS} $R2 0
+      ${NSD_SetText} $usedSpacePctInfoCIP "$R2%"
 
       ; Edit the free/total space labels
       ${NSD_SetText} $freeSpaceInfoCIP "$R0"
