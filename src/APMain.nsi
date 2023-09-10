@@ -28,9 +28,17 @@
   ; The product version must be numerical with the format X.X.X
   !define PRODUCT_VERSION 1.0.0
 
-  ; Links where the app bundles are located
-  !define TEMPLATE_JSON_LINK "https://raw.githubusercontent.com/mherrera01/app-pack-installer/develop/appBundles/Template.json"
-  !define DEFAULT_BUNDLE_JSON_LINK "https://raw.githubusercontent.com/mherrera01/app-pack-installer/develop/appBundles/Apps.json"
+  ;--------------------------------
+  ; AppPack repository
+
+    !define GITHUB_URL "https://github.com"
+    !define RAW_CONTENT_GITHUB "https://raw.githubusercontent.com"
+    !define APP_PACK_GITHUB "mherrera01/app-pack-installer"
+
+    ; Links
+    !define SILENT_MODE_README_LINK "${GITHUB_URL}/${APP_PACK_GITHUB}/tree/develop#silent-mode"
+    !define TEMPLATE_JSON_LINK "${RAW_CONTENT_GITHUB}/${APP_PACK_GITHUB}/develop/appBundles/Template.json"
+    !define DEFAULT_BUNDLE_JSON_LINK "${RAW_CONTENT_GITHUB}/${APP_PACK_GITHUB}/develop/appBundles/Apps.json"
 
 ;--------------------------------
 ; General

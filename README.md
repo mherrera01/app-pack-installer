@@ -1,6 +1,6 @@
 # AppPack
 
-An installer for a bundle of common Windows applications, created using the
+An installer for a bundle of common Windows 10/11 applications, created using the
 [NSIS](https://nsis.sourceforge.io/Main_Page) technology.
 
 > **_NOTE_**: There is no intention of appropriating any of the application executables
@@ -24,3 +24,28 @@ the information of each application to install.
 - [NsThread](https://nsis.sourceforge.io/NsThread_plug-in): Allows the creation of threads.
 - [NsArray](https://nsis.sourceforge.io/Arrays_in_NSIS#nsArray_plug-in): Enables to
 store and manipulate dynamic sized arrays.
+
+## Remarks
+
+### Security Concerns
+
+The installation of apps usually requires administrator privileges and may lead to
+security threats. Therefore, AppPack is open source so that complete transparency
+can be ensured. The setup links in the default bundle are obtained from the official
+sites of each software provider.
+
+> **IMPORTANT**: AppPack just executes the application setups specified in the JSON
+bundle. An analysis to detect malware and other breachesIt is **not** performed.
+The user must be held responsible for the custom bundles that are used. AppPack only
+maintains the JSON files available in this
+[Github repository](https://github.com/mherrera01/app-pack-installer/tree/develop/appBundles).
+
+### Unicode Support
+
+Due to a bug, the nsJSON plug-in cannot read UTF-8 files in unicode. So, the JSON
+bundles are converted to a valid UTF-16 encoding, in order to allow all the language
+characters.
+
+### Silent Mode
+
+Explanation about the silent mode.

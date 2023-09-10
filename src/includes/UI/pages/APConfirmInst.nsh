@@ -271,6 +271,11 @@
     FunctionEnd
 
     Function onSilentModeMoreInfoCIP
+
+      ; Open a URL in a browser to provide more info about
+      ; the silent mode
+      ExecShell "open" "${SILENT_MODE_README_LINK}"
+
     FunctionEnd
 
 !macroend
