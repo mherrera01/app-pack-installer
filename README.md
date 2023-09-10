@@ -3,7 +3,8 @@
 An installer for a bundle of common Windows 10/11 applications, created using the
 [NSIS](https://nsis.sourceforge.io/Main_Page) technology.
 
-> **_NOTE_**: There is no intention of appropriating any of the application executables
+> [!NOTE]
+> There is no intention of appropriating any of the application executables
 used. All the applications belong to their respective owners.
 
 ## Build
@@ -34,10 +35,11 @@ security threats. Therefore, AppPack is open source so that complete transparenc
 can be ensured. The setup links in the default bundle are obtained from the official
 sites of each software provider.
 
-> **IMPORTANT**: AppPack just executes the application setups specified in the JSON
-bundle. An analysis to detect malware and other breachesIt is **not** performed.
-The user must be held responsible for the custom bundles that are used. AppPack only
-maintains the JSON files available in this
+> [!IMPORTANT]
+> AppPack just executes the application setups specified in the JSON bundle. An
+analysis to detect malware and other breaches is **not** performed. The user must be
+held responsible for the custom bundles that are used. AppPack only maintains the
+JSON files available in this
 [Github repository](https://github.com/mherrera01/app-pack-installer/tree/develop/appBundles).
 
 ### Unicode Support
