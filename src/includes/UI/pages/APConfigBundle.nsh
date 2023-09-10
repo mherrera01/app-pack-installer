@@ -154,10 +154,6 @@
         Pop $vbStepInfoCFBP
 
         ; Load the icons for the different bundle states
-        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle.ico', \
-          i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
-        Pop $vbStepIconCFBP
-
         System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle-ok.ico', \
           i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
         Pop $vbOkStepIconCFBP
@@ -166,11 +162,9 @@
           i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
         Pop $vbErrorStepIconCFBP
 
-        ${NSD_CreateButton} 30% 0% 7% 14% ""
+        ; Display the initial icon button
+        ${AP_CREATE_ICON_UI_ELEM} 30% 0% 7% 14% 1 "bundle.ico" 24 $vbStepIconCFBP
         Pop $vbStepButtonCFBP
-        ${NSD_AddStyle} $vbStepButtonCFBP ${BS_ICON}
-
-        SendMessage $vbStepButtonCFBP ${BM_SETIMAGE} ${IMAGE_ICON} $vbStepIconCFBP
         ${NSD_OnClick} $vbStepButtonCFBP onChangeStepClickCFBP
 
       ${NSD_CreateHLine} 38% 16 25% 0u ""
@@ -179,15 +173,8 @@
       ;--------------------------------
       ; Second step menu UI
 
-        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\choose-apps.ico', \
-          i ${IMAGE_ICON}, i 22, i 22, i ${LR_LOADFROMFILE}) i .s"
-        Pop $caStepIconCFBP
-
-        ${NSD_CreateButton} 63% 0% 7% 14% ""
+        ${AP_CREATE_ICON_UI_ELEM} 63% 0% 7% 14% 1 "choose-apps.ico" 22 $caStepIconCFBP
         Pop $caStepButtonCFBP
-        ${NSD_AddStyle} $caStepButtonCFBP ${BS_ICON}
-
-        SendMessage $caStepButtonCFBP ${BM_SETIMAGE} ${IMAGE_ICON} $caStepIconCFBP
         ${NSD_OnClick} $caStepButtonCFBP onChangeStepClickCFBP
 
         ${NSD_CreateLabel} 73% 1% 3% 12u "2."
@@ -201,13 +188,8 @@
       ;--------------------------------
       ; Step selector UI
 
-        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\select-step.ico', \
-          i ${IMAGE_ICON}, i 32, i 32, i ${LR_LOADFROMFILE}) i .s"
-        Pop $selectStepIconCFBP
-
-        ${NSD_CreateIcon} 30% 13% 7% 14% ""
+        ${AP_CREATE_ICON_UI_ELEM} 30% 13% 7% 14% 0 "select-step.ico" 32 $selectStepIconCFBP
         Pop $vbStepSelectorCFBP
-        SendMessage $vbStepSelectorCFBP ${STM_SETICON} $selectStepIconCFBP 0
 
         ${NSD_CreateIcon} 63% 13% 7% 14% ""
         Pop $caStepSelectorCFBP
@@ -557,8 +539,8 @@
 
         ; Success status
         ${ElseIf} $0 == 1
-          !insertmacro AP_SET_UI_COUNT_LIMIT $appGroupsInfoVBS $jsonCountAppGroupsVBS
-          !insertmacro AP_SET_UI_COUNT_LIMIT $appsInfoVBS $jsonCountAppsVBS
+          ${AP_SET_UI_COUNT_LIMIT} $appGroupsInfoVBS $jsonCountAppGroupsVBS
+          ${AP_SET_UI_COUNT_LIMIT} $appsInfoVBS $jsonCountAppsVBS
 
           ${NSD_SetText} $validationStatusInfoVBS "Validation status: \
             .................................... OK"
@@ -849,7 +831,7 @@
         ${EndIf}
 
         ; Update the apps selected UI
-        !insertmacro AP_SET_UI_COUNT_LIMIT $appsSelectedDataCAS $currentAppsSelectedCAS
+        ${AP_SET_UI_COUNT_LIMIT} $appsSelectedDataCAS $currentAppsSelectedCAS
 
       ; With the TVS_INFOTIP applied, the cursor is over an item
       ${ElseIf} $1 = ${TVN_GETINFOTIP}

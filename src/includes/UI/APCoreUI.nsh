@@ -2,6 +2,7 @@
 ; Author: Miguel Herrera
 
 !include "TreeViewControl.nsh"
+!include "Utils.nsh"
 
 !include "pages\APChooseBundle.nsh"
 !include "pages\APConfigBundle.nsh"
@@ -52,19 +53,6 @@
 
 ;--------------------------------
 ; Custom pages
-
-  !macro AP_SET_UI_COUNT_LIMIT elemUI value
-
-    ; Not to show more than 3 digits in a text UI component
-    ; that displays a variable number
-    StrLen $0 ${value}
-    ${If} $0 > 3
-      ${NSD_SetText} ${elemUI} "999+"
-    ${Else}
-      ${NSD_SetText} ${elemUI} "${value}"
-    ${EndIf}
-
-  !macroend
 
   !macro AP_DEFINE_UI_CUSTOM_PAGES
 

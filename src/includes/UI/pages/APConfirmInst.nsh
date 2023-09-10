@@ -23,6 +23,14 @@
     Var driveSpaceNoteCIP
     Var driveSpaceInfoCIP
 
+    Var instTypeCheckCIP
+    Var instTypeCheckStateCIP
+    Var instTypeInfoCIP
+    Var infoBoxIconCIP
+    Var silentModeBoxCIP
+    Var silentModeInfoCIP
+    Var silentModeLinkButtonCIP
+
   ;--------------------------------
   ; Main functions triggered on custom page creation and disposal
 
@@ -45,7 +53,7 @@
       ; function, due to the page disposal
       ${NSD_OnBack} confirmInstPageLeave
 
-      ${NSD_CreateGroupBox} 0% 0% 100% 45% "Storage information"
+      ${NSD_CreateGroupBox} 0% 0% 100% 42% "Storage information"
       Pop $0
 
       ;--------------------------------
@@ -54,7 +62,7 @@
         ${NSD_CreateLabel} 3% 12% 20% 10u "HDD:"
         Pop $0
 
-        ${NSD_CreateDropList} 3% 20% 20% 14u ""
+        ${NSD_CreateDropList} 3% 20% 20% 0u ""
         Pop $drivesDropListCIP
         ${NSD_OnChange} $drivesDropListCIP onChooseDriveCIP
 
@@ -67,18 +75,13 @@
         StrCpy $firstDriveDetectedCIP ""
         ${GetDrives} "HDD" getDrivesInfoCIP
 
-        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\disk-drive.ico', \
-          i ${IMAGE_ICON}, i 28, i 28, i ${LR_LOADFROMFILE}) i .s"
-        Pop $diskDriveIconCIP
-
-        ${NSD_CreateIcon} 28% 7% 5% 10% ""
+        ${AP_CREATE_ICON_UI_ELEM} 28% 6% 5% 10% 0 "disk-drive.ico" 28 $diskDriveIconCIP
         Pop $diskDriveTypeCIP
-        SendMessage $diskDriveTypeCIP ${STM_SETICON} $diskDriveIconCIP 0
 
-        ${NSD_CreateLabel} 35% 12% 40% 12u ""
+        ${NSD_CreateLabel} 35% 11% 40% 12u ""
         Pop $totalSpaceInfoCIP
 
-        ${NSD_CreateProgressBar} 28% 21% 69% 11u ""
+        ${NSD_CreateProgressBar} 28% 20% 69% 8% ""
         Pop $driveSpaceBarCIP
 
         ; The default visual styles of the progress bar must be disabled,
@@ -90,14 +93,14 @@
         ; Set the drive space range from 0 to 100 (percentage)
         SendMessage $driveSpaceBarCIP ${PBM_SETRANGE32} 0 100
 
-        ${NSD_CreateLabel} 83% 12% 14% 12u ""
+        ${NSD_CreateLabel} 83% 11% 14% 12u ""
         Pop $usedSpacePctInfoCIP
         ${NSD_AddStyle} $usedSpacePctInfoCIP ${SS_RIGHT}
 
-        ${NSD_CreateLabel} 28% 32% 13% 12u "Free space:"
+        ${NSD_CreateLabel} 28% 31% 13% 12u "Free space:"
         Pop $0
 
-        ${NSD_CreateLabel} 42% 32% 32% 12u ""
+        ${NSD_CreateLabel} 42% 31% 33% 12u ""
         Pop $freeSpaceInfoCIP
 
         ; Select the first drive found in the drop down list
@@ -105,16 +108,38 @@
         Push $firstDriveDetectedCIP
         Call setDriveSpaceUICIP
 
-      ${NSD_CreateLabel} 0% 48% 88% 20u "Note about disk space"
+      ${NSD_CreateLabel} 2% 48% 86% 20u "AppPack cannot verify how much \
+        drive space each application requires, so make sure there is enough \
+        storage for all of them."
       Pop $driveSpaceInfoCIP
 
-      System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\important-note.ico', \
-        i ${IMAGE_ICON}, i 28, i 28, i ${LR_LOADFROMFILE}) i .s"
-      Pop $impNoteIconCIP
-
-      ${NSD_CreateIcon} 90% 48% 5% 10% ""
+      ${AP_CREATE_ICON_UI_ELEM} 91% 47% 5% 10% 0 "important-note.ico" 28 $impNoteIconCIP
       Pop $driveSpaceNoteCIP
-      SendMessage $driveSpaceNoteCIP ${STM_SETICON} $impNoteIconCIP 0
+
+      ${NSD_CreateHLine} 0% 65% 100% 0u ""
+      Pop $0
+
+      ;--------------------------------
+      ; Installation type UI
+
+        ${NSD_CreateCheckBox} 2% 70% 4% 6% ""
+        Pop $instTypeCheckCIP
+        ${NSD_OnClick} $instTypeCheckCIP onInstTypeClickCIP
+
+        ${NSD_CreateLabel} 7% 70% 93% 12u "Enable silent mode to install \
+          the apps without any user interaction"
+        Pop $instTypeInfoCIP
+
+        ${AP_CREATE_ICON_UI_ELEM} 1% 82% 5% 10% 0 "info-box.ico" 28 $infoBoxIconCIP
+        Pop $silentModeBoxCIP
+
+        ${NSD_CreateLabel} 10% 82% 70% 20u "Some applications may not support \
+          silent mode, in which case manual intervention will be required."
+        Pop $silentModeInfoCIP
+
+        ${NSD_CreateButton} 80% 83% 18% 12u "More info"
+        Pop $silentModeLinkButtonCIP
+        ${NSD_OnClick} $silentModeLinkButtonCIP onSilentModeMoreInfoCIP
 
       nsDialogs::Show
 
@@ -124,6 +149,8 @@
 
       ; Free the icons loaded
       System::Call "user32::DestroyIcon(i $diskDriveIconCIP)"
+      System::Call "user32::DestroyIcon(i $impNoteIconCIP)"
+      System::Call "user32::DestroyIcon(i $infoBoxIconCIP)"
 
     FunctionEnd
 
@@ -233,6 +260,17 @@
       Push $1
       Call setDriveSpaceUICIP
 
+    FunctionEnd
+
+    Function onInstTypeClickCIP
+
+      ; Empty the stack and store the checkbox state
+      Pop $0
+      ${NSD_GetState} $instTypeCheckCIP $instTypeCheckStateCIP
+
+    FunctionEnd
+
+    Function onSilentModeMoreInfoCIP
     FunctionEnd
 
 !macroend
