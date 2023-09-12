@@ -39,8 +39,8 @@
 ; Create an UI element, returned in the stack, to display an icon.
 ;
 ; ; x, y, w, h: Position and size of the UI element.
-; ; isButton: 1 for creating a button with the ${BS_ICON} style,
-;   or otherwise just an icon UI element.
+; ; isButton: 1 for creating a button with the ${BS_ICON} style.
+;   Otherwise, just an icon UI element is shown.
 ; ; iName: The name of the .ico file, which must be in the
 ;   $PLUGINSDIR\icons\ directory.
 ; ; iSize: The width and heigth in pixels of the icon to load.

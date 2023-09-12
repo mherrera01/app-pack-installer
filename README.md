@@ -4,8 +4,8 @@ An installer for a bundle of common Windows 10/11 applications, created using th
 [NSIS](https://nsis.sourceforge.io/Main_Page) technology.
 
 > [!NOTE]
-> There is no intention of appropriating any of the application executables
-used. All the applications belong to their respective owners.
+> There is no intention of appropriating any of the third-party software components
+in use. All the applications belong to their respective owners.
 
 ## Build
 

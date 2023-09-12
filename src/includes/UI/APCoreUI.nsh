@@ -32,7 +32,6 @@
   ; The order in which the pages are inserted, is the same as
   ; the one displayed in the UI
 
-  ; Installer pages
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 

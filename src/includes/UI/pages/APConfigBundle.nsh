@@ -232,9 +232,9 @@
             Pop $disclaimerLabelInfoVBS
             SendMessage $disclaimerLabelInfoVBS ${WM_SETFONT} $boldFontText 0
 
-            ${NSD_CreateLabel} 16% 85% 84% 20u "There is no intention \
-              of appropriating any of the application executables used. \
-              All the applications belong to their respective owners."
+            ${NSD_CreateLabel} 16% 85% 84% 20u "There is no intention of \
+              appropriating any of the third-party software components in \
+              use. All the applications belong to their respective owners."
             Pop $disclaimerInfoVBS
 
             ; Download the default bundle and update the UI

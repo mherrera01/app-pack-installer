@@ -110,14 +110,14 @@
       ; attributes of the TV item to add. As only the flags TVIF_TEXT and
       ; TVIF_PARAM are specified, just the pszText, cchTextMax and lParam members
       ; must be set in the structure.
-      System::Call "*(i r1, i ${TVI_SORT}, i ${TVIF_TEXT}|${TVIF_PARAM}, i, i, i, t r2, i ${__TVI_MAX_TEXT_NT}, i, i, i, i r3) i .R1"
+      System::Call "*(i r1, i ${TVI_SORT}, i ${TVIF_TEXT}|${TVIF_PARAM}, i, i, i, t r2, i ${__TVI_MAX_TEXT_NT}, i, i, i, i r3) i .R0"
 
       ; Insert a new item to the tree view and push the handle
-      SendMessage $0 ${TVM_INSERTITEM} 0 $R1 $4
+      SendMessage $0 ${TVM_INSERTITEM} 0 $R0 $4
       Push $4
 
       ; Free the TVINSERTSTRUCT structure allocated
-      System::Free $R1
+      System::Free $R0
 
       ; Restore the original values of the registers
       System::Store L

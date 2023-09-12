@@ -49,6 +49,9 @@
         Quit
       ${EndIf}
 
+      ; Clear the error flag as it is set by the nsArray functions
+      ClearErrors
+
       ; The back button performs the same operation as the leave
       ; function, due to the page disposal
       ${NSD_OnBack} confirmInstPageLeave
@@ -74,6 +77,10 @@
         StrCpy $nDrivesCIP 0
         StrCpy $firstDriveDetectedCIP ""
         ${GetDrives} "HDD" getDrivesInfoCIP
+
+        ; Initialize an array to store the bytes conversion parameters
+        nsArray::SetList bytesConversionArray \
+          /key=KB 1024 /key=MB 1048576 /key=GB 1073741824 /key=TB 1099511627776 /end
 
         ${AP_CREATE_ICON_UI_ELEM} 28% 6% 5% 10% 0 "disk-drive.ico" 28 $diskDriveIconCIP
         Pop $diskDriveTypeCIP
@@ -147,6 +154,9 @@
 
     Function confirmInstPageLeave
 
+      ; Clear the bytes conversion array
+      nsArray::Clear bytesConversionArray
+
       ; Free the icons loaded
       System::Call "user32::DestroyIcon(i $diskDriveIconCIP)"
       System::Call "user32::DestroyIcon(i $impNoteIconCIP)"
@@ -176,22 +186,46 @@
 
       Pop $0
 
+      ; Set a limit. No more than 1000 TB will be shown.
+      System::Int64Op $0 < 1099511627776001
+      Pop $1
+      ${If} $1 = 0
+        Push "> 1000 TB"
+        Return
+      ${EndIf}
+
+      ; Get the unit conversion for the bytes to display
+      ${ForEachIn} bytesConversionArray $1 $2
+
+        System::Int64Op $2 * 1000
+        Pop $3
+        System::Int64Op $0 < $3
+        Pop $3
+
+        ${If} $3 = 1
+          ${ExitFor}
+        ${EndIf}
+
+      ${Next}
+
       ; Shift the decimal point two places to the right
       System::Int64Op $0 * 100
       Pop $0
-      System::Int64Op $0 / 1073741824
+      System::Int64Op $0 / $2
       Pop $0
 
-      ; Get the integer part
-      System::Int64Op $0 / 100
-      Pop $1
+      ; Add leading zeros if needed
+      StrLen $2 $0
+      ${DoUntil} $2 > 2
+        StrCpy $0 "0$0"
+        IntOp $2 $2 + 1
+      ${Loop}
 
-      ; Get the decimal part
-      System::Int64Op $0 % 100
-      Pop $2
+      ; Get the integer and decimal parts
+      StrCpy $3 $0 -2
+      StrCpy $4 $0 "" -2
 
-      StrCpy $0 "$1.$2 GB"
-      Push $0
+      Push "$3.$4 $1"
 
     FunctionEnd
 
