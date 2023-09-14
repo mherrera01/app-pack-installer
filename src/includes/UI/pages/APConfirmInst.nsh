@@ -187,9 +187,7 @@
       Pop $0
 
       ; Set a limit. No more than 1000 TB will be shown.
-      System::Int64Op $0 < 1099511627776001
-      Pop $1
-      ${If} $1 = 0
+      ${If} $0 L> 1099511627776000
         Push "> 1000 TB"
         Return
       ${EndIf}
@@ -199,10 +197,8 @@
 
         System::Int64Op $2 * 1000
         Pop $3
-        System::Int64Op $0 < $3
-        Pop $3
 
-        ${If} $3 = 1
+        ${If} $0 L< $3
           ${ExitFor}
         ${EndIf}
 
@@ -235,12 +231,19 @@
 
       ; Call directly the system function as the DriveSpace macro
       ; in the FileFunc header file does not consider the decimals.
-      ; The values returned are large integers, so the math operations
-      ; must be performed with Int64Op
+      ; The values returned are 64-bit integers, so the math
+      ; operations must be performed with Int64Op (System.dll):
+      ; a L= b; a L<> b; a L< b; a L>= b; a L> b; a L<= b
       System::Call "kernel32::GetDiskFreeSpaceEx(t r0, *l .R0, *l .R1, *l) i .s"
       Pop $0
 
-      ${If} $0 == 0
+      ; If GetDiskFreeSpaceEx fails, the return value is 0
+      ${If} $0 = 0
+
+      ; Int64Op handles signed integers, and hence, the most
+      ; significant bit is used. The bytes from GetDiskFreeSpaceEx
+      ; (unsigned) could be considered as a negative number.
+      ${OrIf} $R1 L< 0
 
         ; Set the error state in the drive space UI
         StrCpy $R0 "???"
@@ -259,12 +262,12 @@
         System::Int64Op $0 / $R1
         Pop $R2
 
-        ; Free bytes to GB
+        ; Free bytes conversion
         Push $R0
         Call displayBytesCIP
         Pop $R0
 
-        ; Total bytes to GB
+        ; Total bytes conversion
         Push $R1
         Call displayBytesCIP
         Pop $R1
