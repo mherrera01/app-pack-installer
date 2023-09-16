@@ -154,16 +154,17 @@
         Pop $vbStepInfoCFBP
 
         ; Load the icons for the different bundle states
-        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle-ok.ico', \
-          i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
+        ${AP_LOAD_ICON} "bundle-ok.ico" 24
         Pop $vbOkStepIconCFBP
 
-        System::Call "user32::LoadImage(i, t '$PLUGINSDIR\icons\bundle-error.ico', \
-          i ${IMAGE_ICON}, i 24, i 24, i ${LR_LOADFROMFILE}) i .s"
+        ${AP_LOAD_ICON} "bundle-error.ico" 24
         Pop $vbErrorStepIconCFBP
 
+        ${AP_LOAD_ICON} "bundle.ico" 24
+        Pop $vbStepIconCFBP
+
         ; Display the initial icon button
-        ${AP_CREATE_ICON_UI_ELEM} 30% 0% 7% 14% 1 "bundle.ico" 24 $vbStepIconCFBP
+        ${AP_CREATE_ICON_UI_ELEM} 30% 0% 7% 14% 1 $vbStepIconCFBP
         Pop $vbStepButtonCFBP
         ${NSD_OnClick} $vbStepButtonCFBP onChangeStepClickCFBP
 
@@ -173,7 +174,10 @@
       ;--------------------------------
       ; Second step menu UI
 
-        ${AP_CREATE_ICON_UI_ELEM} 63% 0% 7% 14% 1 "choose-apps.ico" 22 $caStepIconCFBP
+        ${AP_LOAD_ICON} "choose-apps.ico" 22
+        Pop $caStepIconCFBP
+
+        ${AP_CREATE_ICON_UI_ELEM} 63% 0% 7% 14% 1 $caStepIconCFBP
         Pop $caStepButtonCFBP
         ${NSD_OnClick} $caStepButtonCFBP onChangeStepClickCFBP
 
@@ -188,7 +192,10 @@
       ;--------------------------------
       ; Step selector UI
 
-        ${AP_CREATE_ICON_UI_ELEM} 30% 13% 7% 14% 0 "select-step.ico" 32 $selectStepIconCFBP
+        ${AP_LOAD_ICON} "select-step.ico" 32
+        Pop $selectStepIconCFBP
+
+        ${AP_CREATE_ICON_UI_ELEM} 30% 13% 7% 14% 0 $selectStepIconCFBP
         Pop $vbStepSelectorCFBP
 
         ${NSD_CreateIcon} 63% 13% 7% 14% ""
@@ -539,8 +546,8 @@
 
         ; Success status
         ${ElseIf} $0 == 1
-          ${AP_SET_UI_COUNT_LIMIT} $appGroupsInfoVBS $jsonCountAppGroupsVBS
-          ${AP_SET_UI_COUNT_LIMIT} $appsInfoVBS $jsonCountAppsVBS
+          ${AP_SET_UI_NUM_LIMIT} $appGroupsInfoVBS $jsonCountAppGroupsVBS 3
+          ${AP_SET_UI_NUM_LIMIT} $appsInfoVBS $jsonCountAppsVBS 3
 
           ${NSD_SetText} $validationStatusInfoVBS "Validation status: \
             .................................... OK"
@@ -831,7 +838,7 @@
         ${EndIf}
 
         ; Update the apps selected UI
-        ${AP_SET_UI_COUNT_LIMIT} $appsSelectedDataCAS $currentAppsSelectedCAS
+        ${AP_SET_UI_NUM_LIMIT} $appsSelectedDataCAS $currentAppsSelectedCAS 3
 
       ; With the TVS_INFOTIP applied, the cursor is over an item
       ${ElseIf} $1 = ${TVN_GETINFOTIP}

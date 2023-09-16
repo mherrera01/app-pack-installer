@@ -82,7 +82,10 @@
         nsArray::SetList bytesConversionArray \
           /key=KB 1024 /key=MB 1048576 /key=GB 1073741824 /key=TB 1099511627776 /end
 
-        ${AP_CREATE_ICON_UI_ELEM} 28% 6% 5% 10% 0 "disk-drive.ico" 28 $diskDriveIconCIP
+        ${AP_LOAD_ICON} "disk-drive.ico" 28
+        Pop $diskDriveIconCIP
+
+        ${AP_CREATE_ICON_UI_ELEM} 28% 6% 5% 10% 0 $diskDriveIconCIP
         Pop $diskDriveTypeCIP
 
         ${NSD_CreateLabel} 35% 11% 40% 12u ""
@@ -120,7 +123,10 @@
         storage for all of them."
       Pop $driveSpaceInfoCIP
 
-      ${AP_CREATE_ICON_UI_ELEM} 91% 47% 5% 10% 0 "important-note.ico" 28 $impNoteIconCIP
+      ${AP_LOAD_ICON} "important-note.ico" 28
+      Pop $impNoteIconCIP
+
+      ${AP_CREATE_ICON_UI_ELEM} 91% 47% 5% 10% 0 $impNoteIconCIP
       Pop $driveSpaceNoteCIP
 
       ${NSD_CreateHLine} 0% 65% 100% 0u ""
@@ -137,7 +143,10 @@
           the apps without any user interaction"
         Pop $instTypeInfoCIP
 
-        ${AP_CREATE_ICON_UI_ELEM} 1% 82% 5% 10% 0 "info-box.ico" 28 $infoBoxIconCIP
+        ${AP_LOAD_ICON} "info-box.ico" 28
+        Pop $infoBoxIconCIP
+
+        ${AP_CREATE_ICON_UI_ELEM} 1% 82% 5% 10% 0 $infoBoxIconCIP
         Pop $silentModeBoxCIP
 
         ${NSD_CreateLabel} 10% 82% 70% 20u "Some applications may not support \
