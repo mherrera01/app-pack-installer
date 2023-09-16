@@ -241,9 +241,14 @@
       ${If} $0 = 0
 
       ; Int64Op handles signed integers, and hence, the most
-      ; significant bit is used. The bytes from GetDiskFreeSpaceEx
-      ; (unsigned) could be considered as a negative number.
-      ${OrIf} $R1 L< 0
+      ; significant bit is used. The number of bytes from
+      ; GetDiskFreeSpaceEx (unsigned) could be considered as a
+      ; negative number.
+      ${OrIf} $R1 L<= 0
+
+      ; Set a limit to avoid an integer overflow when calculating
+      ; the percentage (max. 63 bits after multiplying by 100)
+      ${OrIf} $R1 L> 0x147AE147AE147AE
 
         ; Set the error state in the drive space UI
         StrCpy $R0 "???"
