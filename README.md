@@ -1,11 +1,16 @@
 # AppPack
 
-An installer for a bundle of common Windows 10/11 applications, created using the
-[NSIS](https://nsis.sourceforge.io/Main_Page) technology.
+AppPack is an open-source installer designed to simplify the process of setting
+up a Windows 10/11 computer. It provides a bundle of essential third-party
+applications across different categories, from which users can choose - all
+conveniently housed in one place. The step-by-step installation wizard offers
+a straightforward approach to create a custom system environment.
 
 > [!NOTE]
 > There is no intention of appropriating any of the third-party software components
 in use. All the applications belong to their respective owners.
+
+_Created using the [NSIS](https://nsis.sourceforge.io/Main_Page) technology_
 
 ## Build
 

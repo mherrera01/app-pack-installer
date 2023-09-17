@@ -45,6 +45,7 @@
 
   ; Installer name
   Name "${PRODUCT_NAME}"
+  Caption "${PRODUCT_NAME}"
   OutFile "${PRODUCT_NAME}.exe"
   Unicode True
 

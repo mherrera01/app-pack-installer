@@ -12,18 +12,10 @@
 
   ; Show a message to the user when the installer is aborted
   !define MUI_ABORTWARNING
+  !define MUI_ABORTWARNING_TEXT "Are you sure you want to quit ${PRODUCT_NAME}?"
 
   ; Display customized icon
   !define MUI_ICON ".\icons\AppPack.ico"
-
-  ; Display customized text in the welcome page
-  !define MUI_WELCOMEPAGE_TEXT "Setup will guide you through the \
-    installation of ${PRODUCT_NAME}.$\n$\nA bundle of third-party \
-    applications you choose will be installed on your computer. Make \
-    sure you have an internet connection.$\n$\nIt is recommended that \
-    you close all other applications before starting Setup. This will \
-    make it possible to update relevant system files without having \
-    to reboot your computer.$\n$\nClick Next to continue."
 
 !macroend
 
@@ -32,15 +24,51 @@
   ; The order in which the pages are inserted, is the same as
   ; the one displayed in the UI
 
-  !insertmacro MUI_PAGE_WELCOME
-  !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
+  ;--------------------------------
+  ; Welcome page
+
+    !define MUI_WELCOMEPAGE_TITLE "Welcome to ${PRODUCT_NAME}"
+
+    ; Display customized text in the welcome page
+    !define MUI_WELCOMEPAGE_TEXT "${PRODUCT_NAME} is an open-source installer \
+      designed to simplify the process of setting up your computer. You will \
+      be able to create a fully customizable environment by installing multiple \
+      third-party applications at once. You can either choose from a predefined \
+      software bundle, or even provide your own selection.$\n$\nMake sure you \
+      have an internet connection.$\nIt is recommended that you close all \
+      other applications and reboot your computer when the installation has \
+      finished.$\n$\nClick Next to continue."
+
+    !insertmacro MUI_PAGE_WELCOME
+
+  ;--------------------------------
+  ; License page
+
+    !define MUI_PAGE_HEADER_SUBTEXT "Please review the license terms of ${PRODUCT_NAME}."
+
+    !define MUI_LICENSEPAGE_TEXT_BOTTOM "${PRODUCT_NAME} is under the MIT \
+      license, which is a permissive software license. If you accept the terms \
+      of the agreement, click I Agree to continue."
+
+    !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
   ; Custom pages
   Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
   Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
   Page custom confirmInstPage confirmInstPageLeave /ENABLECANCEL
 
-  !insertmacro MUI_PAGE_INSTFILES
+  ;--------------------------------
+  ; Installation page
+
+    !define MUI_PAGE_HEADER_SUBTEXT "Please wait while ${PRODUCT_NAME} is \
+      installing the apps."
+
+    !define MUI_INSTFILESPAGE_FINISHHEADER_SUBTEXT "${PRODUCT_NAME} has \
+      finished successfully."
+    !define MUI_INSTFILESPAGE_ABORTHEADER_SUBTEXT "${PRODUCT_NAME} could not \
+      complete the installation successfully."
+
+    !insertmacro MUI_PAGE_INSTFILES
 
 !macroend
 
