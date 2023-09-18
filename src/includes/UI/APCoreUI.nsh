@@ -15,7 +15,7 @@
   !define MUI_ABORTWARNING_TEXT "Are you sure you want to quit ${PRODUCT_NAME}?"
 
   ; Display customized icon
-  !define MUI_ICON ".\icons\AppPack.ico"
+  !define MUI_ICON ".\resources\icons\AppPack.ico"
 
 !macroend
 
@@ -27,6 +27,7 @@
   ;--------------------------------
   ; Welcome page
 
+    !define MUI_WELCOMEFINISHPAGE_BITMAP ".\resources\welcome-page.bmp"
     !define MUI_WELCOMEPAGE_TITLE "Welcome to ${PRODUCT_NAME}"
 
     ; Display customized text in the welcome page
@@ -102,7 +103,7 @@
         ; format using ImageMagick.
         ; $> magick convert image.png -define icon:auto-resize="64,32,24,16" icon.ico
         SetOutPath "$PLUGINSDIR\icons"
-        File ".\icons\*.ico*"
+        File ".\resources\icons\*.ico*"
 
         ; Set the default $OUTDIR, as SetOutPath locks the temp dir
         SetOutPath "-"
