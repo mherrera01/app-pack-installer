@@ -187,7 +187,7 @@
 
       ; Increase the number of drives detected
       IntOp $nDrivesCIP $nDrivesCIP + 1
-	    Push $0
+      Push $0
 
     FunctionEnd
 
