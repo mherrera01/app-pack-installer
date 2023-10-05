@@ -15,6 +15,7 @@
   !addincludedir ".\includes"
   !addincludedir ".\includes\UI"
 
+  !include "APProcessBundle.nsh"
   !include "APCoreUI.nsh"
 
 ;--------------------------------
@@ -118,7 +119,7 @@
     Pop $0
 
     ${If} $0 != 0
-      ; Free the Nscurl module
+      ; Free the NScurl module
       System::Call "kernel32::FreeLibrary(i $0) i .s"
       Pop $0
     ${EndIf}

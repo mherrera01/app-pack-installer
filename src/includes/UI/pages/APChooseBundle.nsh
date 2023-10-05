@@ -46,7 +46,7 @@
     Function chooseBundlePage
 
       !insertmacro MUI_HEADER_TEXT "Choose Bundle" "Choose the bundle of \
-        applications you want to download."
+        applications you want to load."
 
       nsDialogs::Create 1018
       Pop $dialogCBP
@@ -138,7 +138,7 @@
   ; Helper functions
 
     Function toggleCustomizedUICBP
-      
+
       ; Enable (1) or disable (0) the UI components that depend on
       ; choosing the custom bundle option
       Pop $0

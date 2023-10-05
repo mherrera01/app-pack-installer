@@ -1,4 +1,4 @@
-; File: Utils.nsh
+; File: APUtils.nsh
 ; Author: Miguel Herrera
 
 ;--------------------------------

@@ -2,7 +2,7 @@
 ; Author: Miguel Herrera
 
 !include "TreeViewControl.nsh"
-!include "Utils.nsh"
+!include "APUtils.nsh"
 
 !include "pages\APChooseBundle.nsh"
 !include "pages\APConfigBundle.nsh"

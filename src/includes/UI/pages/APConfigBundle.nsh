@@ -244,9 +244,6 @@
               use. All the applications belong to their respective owners."
             Pop $disclaimerInfoVBS
 
-            ; Download the default bundle and update the UI
-            Call httpDefBundleDownloadVBS
-
           ${ElseIf} $customBundleButtonStateCBP == ${BST_CHECKED}
 
             ; JSON validation UI (starting on 28% in the Y axis)
@@ -329,11 +326,23 @@
       Push 1
       Call changeStepUICFBP
 
-      ${If} $customBundleButtonStateCBP == ${BST_CHECKED}
+      ${If} $defaultBundleButtonStateCBP == ${BST_CHECKED}
+
+        ; Download the default bundle and update the UI
+        Call httpDefBundleDownloadVBS
+
+      ${ElseIf} $customBundleButtonStateCBP == ${BST_CHECKED}
+
+        ; TODO: Not to use Thread_Create for avoiding bugs??
+        ; https://nsis.sourceforge.io/Banner_with_Cancel_button
 
         ; Create a thread for validating the custom bundle without
         ; blocking the UI
-        ${Thread_Create} threadCustomBundleVBS $0
+        ; ${Thread_Create} threadCustomBundleVBS $0
+
+        ; Validate the bundle provided in the previous page in a different thread
+        Push "$jsonFileInputStateCBP"
+        Call validateJsonBundleVBS
 
       ${EndIf}
 
@@ -676,10 +685,15 @@
         Pop $0
 
         ; Load the JSON file
-        ; TODO: nsJSON cannot read UTF-8 files in unicode. Nevertheless,
+        ; TODO: The threads are not the problem, but loading the JSON.
+        ; Going back and forward in the custom bundle eventually crashes.
+        ; Also, nsJSON cannot read UTF-8 files in unicode. Nevertheless,
         ; UTF-16 encoding is allowed, so maybe converting UTF-8 to UTF-16
         ; could be a workaround:
         ; https://nsis.sourceforge.io/Unicode_plug-in
+        ;
+        ; ** Maybe it is not a bug, in the Example.nsi no /unicode switch
+        ; is used for UTF-8 **
         nsJSON::Set /file "$0"
         ${If} ${Errors}
           Push "The JSON bundle could not be opened."
@@ -750,7 +764,11 @@
 
           ; Create a thread for validating the default bundle without
           ; blocking the UI
-          ${Thread_Create} threadDefBundleVBS $0
+          ; ${Thread_Create} threadDefBundleVBS $0
+
+          ; Validate the default JSON bundle in a different thread
+          Push "$PLUGINSDIR\Apps.json"
+          Call validateJsonBundleVBS
 
         ${EndIf}
 
