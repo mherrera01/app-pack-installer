@@ -8,6 +8,8 @@
   !include "nsDialogs.nsh"
   !include "LogicLib.nsh"
   !include "FileFunc.nsh"
+  !include "TextFunc.nsh"
+  !include "WordFunc.nsh"
   !include "nsThread.nsh"
   !include "nsArray.nsh"
 
@@ -15,7 +17,7 @@
   !addincludedir ".\includes"
   !addincludedir ".\includes\UI"
 
-  !include "APProcessBundle.nsh"
+  !include "APBundleParser.nsh"
   !include "APCoreUI.nsh"
 
 ;--------------------------------
@@ -48,7 +50,9 @@
   Name "${PRODUCT_NAME}"
   Caption "${PRODUCT_NAME}"
   OutFile "${PRODUCT_NAME}.exe"
+
   Unicode True
+  ; ManifestDPIAware True
 
   ; Default installation folder
   !if ${TEST} = 1

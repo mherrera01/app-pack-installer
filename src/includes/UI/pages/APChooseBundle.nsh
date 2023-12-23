@@ -114,11 +114,11 @@
 
       ; Get the next button handler
       GetDlgItem $nextButtonCBP $HWNDPARENT 1
-      
+
       ; Enable the customized app bundle UI if the custom button is selected
       Push $customBundleButtonStateCBP
       Call toggleCustomizedUICBP
-      
+
       nsDialogs::Show
 
     FunctionEnd
@@ -241,7 +241,7 @@
       ${NSD_GetText} $jsonFileInputCBP $0
 
       ; Open a window to select a JSON file
-      nsDialogs::SelectFileDialog open "$0" ".json files|*.json"
+      nsDialogs::SelectFileDialog open "$0" ".txt files|*.txt"
       Pop $0
       ${If} $0 != ""
         ${NSD_SetText} $jsonFileInputCBP "$0"

@@ -2,11 +2,14 @@
 ; Author: Miguel Herrera
 
 !include "TreeViewControl.nsh"
+!include "ToolBarControl.nsh"
 !include "APUtils.nsh"
+!include "APBundleViewer.nsh"
 
 !include "pages\APChooseBundle.nsh"
 !include "pages\APConfigBundle.nsh"
 !include "pages\APConfirmInst.nsh"
+!include "pages\testUI.nsh"
 
 !macro AP_SET_UI_SETTINGS
 
@@ -54,6 +57,7 @@
     !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
   ; Custom pages
+  Page custom testPage testPageLeave /ENABLECANCEL
   Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
   Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
   Page custom confirmInstPage confirmInstPageLeave /ENABLECANCEL
@@ -86,6 +90,7 @@
 
     Var boldFontText
 
+    !insertmacro TEST_PAGE
     !insertmacro AP_DEFINE_UI_CHOOSE_BUNDLE_PAGE
     !insertmacro AP_DEFINE_UI_CONFIG_BUNDLE_PAGE
     !insertmacro AP_DEFINE_UI_CONFIRM_INST_PAGE

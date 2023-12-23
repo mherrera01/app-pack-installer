@@ -24,8 +24,10 @@
   ; In case the URL string has the same length as the maximum
   ; allowed by NSIS, it is assumed that the value has been truncated.
   StrLen $2 $1
+  IntOp $2 $2 + 1  ; Null terminator
+  IntOp $2 $2 * ${NSIS_CHAR_SIZE}  ; 1 for ANSI and 2 for Unicode (UTF-16LE)
   ${If} $2 == ${NSIS_MAX_STRLEN}
-    StrCpy $1 "The URL is too long. NSIS maximum string length is 1024."
+    StrCpy $1 "The URL is too long for NSIS (1024 bytes max)."
   ${EndIf}
 
   ; Allocate a buffer to set the JSON item description and URL.
@@ -91,6 +93,8 @@
       Var downloadDefBundleIdVBS
 
       ; JSON validation UI handlers
+      Var exportBundleIconVBS
+      Var bundleDetailsIconVBS
       Var jsonValidationBoxVBS
       Var appGroupsLabelInfoVBS
       Var appGroupsInfoVBS
@@ -168,7 +172,7 @@
         Pop $vbStepButtonCFBP
         ${NSD_OnClick} $vbStepButtonCFBP onChangeStepClickCFBP
 
-      ${NSD_CreateHLine} 38% 16 25% 0u ""
+      ${NSD_CreateHLine} 38% 16 25% 0u ""  ; TODO: CHANGE TO DIALOG UNITS
       Pop $0
 
       ;--------------------------------
@@ -224,7 +228,7 @@
             ${NSD_OnClick} $retryDownloadButtonVBS onRetryDownloadVBS
 
             ; Create the progress bar of the bundle download
-            ${NSD_CreateProgressBar} 0% 38% 100% 14u ""
+            ${NSD_CreateProgressBar} 0% 38% 100% 13u ""
             Pop $downloadProgressBarVBS
 
             ; Set the progress bar range from 0 to 100 (percentage)
@@ -328,21 +332,32 @@
 
       ${If} $defaultBundleButtonStateCBP == ${BST_CHECKED}
 
+        ; BUG!!! PROBABLY DUE TO THE ASYNC THREAD WHILE DOWNLOADING.
+        ; CLICK THE TOOLBAR BUTTONS/THE OUTER DIALOG BEFORE THE
+        ; DOWNLOAD FINISHES AND IT CAUSES THE INSTALLER TO CRASH.
+
         ; Download the default bundle and update the UI
         Call httpDefBundleDownloadVBS
 
       ${ElseIf} $customBundleButtonStateCBP == ${BST_CHECKED}
-
-        ; TODO: Not to use Thread_Create for avoiding bugs??
-        ; https://nsis.sourceforge.io/Banner_with_Cancel_button
 
         ; Create a thread for validating the custom bundle without
         ; blocking the UI
         ; ${Thread_Create} threadCustomBundleVBS $0
 
         ; Validate the bundle provided in the previous page in a different thread
-        Push "$jsonFileInputStateCBP"
-        Call validateJsonBundleVBS
+        ; Push "$jsonFileInputStateCBP"
+        ; Call validateJsonBundleVBS
+
+        ; TESTS OF THE BUNDLE FILE LOAD
+        ${AP_LOAD_BUNDLE_FILE} $jsonFileInputStateCBP "bundlePropArray" "bundleDataArray" $appsTreeViewCAS
+        Pop $0
+
+        System::Call "*$0(t .R0, t .R1, i .R2, i .R3)"
+        MessageBox MB_OK "$R0 | $R1 | $R2, $R3"
+        System::Free $0
+
+        EnableWindow $trustCustomBundleCheckVBS 1
 
       ${EndIf}
 
@@ -361,6 +376,8 @@
       System::Call "user32::DestroyIcon(i $vbErrorStepIconCFBP)"
       System::Call "user32::DestroyIcon(i $caStepIconCFBP)"
       System::Call "user32::DestroyIcon(i $selectStepIconCFBP)"
+      System::Call "user32::DestroyIcon(i $exportBundleIconVBS)"
+      System::Call "user32::DestroyIcon(i $bundleDetailsIconVBS)"
 
       ; Free the memory allocated
       ${ForEachIn} jsonItemInfoArray $0 $1
@@ -480,28 +497,72 @@
       IntOP $1 $0 + 8
       IntOp $2 $0 + 18
 
-      ${NSD_CreateGroupBox} 0% "$0%" 100% 30% ""
+      ; ${NSD_CreateGroupBox} 0% "$0%" 1% 30% ""
+      ; Pop $3
+
+      ; The width and height of the toolbar is defined by the
+      ; buttons later included
+      IntOp $3 $0 + 3
+      ${TBR_V_CREATE} 1% "$3%"
+      Pop $3
+
+      ; Create an image list of 24x24 pixels
+      ; ILC_MASK = 0x0001, ILC_COLOR32 = 0x0020
+      System::Call "comctl32::ImageList_Create(i 23, i 23, i 0x0001|0x0020, i 2, i 0) i .r4"
+
+      ${AP_LOAD_ICON} "bundle-export.ico" 23
+      Pop $exportBundleIconVBS
+
+      ${AP_LOAD_ICON} "bundle-details.ico" 23
+      Pop $bundleDetailsIconVBS
+
+      ; Add the icon handle, returned by AP_LOAD_ICON, to the image list
+      System::Call "comctl32::ImageList_AddIcon(i r4, i $exportBundleIconVBS) i .r5"
+      System::Call "comctl32::ImageList_AddIcon(i r4, i $bundleDetailsIconVBS) i .r6"
+      ${TBR_SET_IMAGE_LIST} $3 $4
+
+      ; Use I_IMAGENONE to indicate that the button does not have an image
+      ${TBR_V_INSERT_BUTTON} $3 0 $5 ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Export logfile" ; Export logfile
+      ${TBR_V_INSERT_BUTTON} $3 1 $6 ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details" ; Show bundle details
+
+      ; A function on the interface is required after inserting the buttons
+      ; TBR_V_SET_SIZE (maybe an option for having all the buttons of the same size?)
+      ; While loop (TB_BUTTONCOUNT ++), TB_SETBUTTONSIZE (MAX(TB_GETITEMRECT))
+      ; This function is required to adjust the width of the VERTICAL toolbar
+      ; (fixed or not). Also use this for HORIZONTAL toolbar would be nice
+      ; with TB_GETMAXSIZE (not to use TB_AUTOSIZE:
+      ; https://github.com/wxWidgets/wxWidgets/blob/8ea22b5e92bf46add0b20059f6e39a938858ff97/src/msw/toolbar.cpp#L1819)
+
+      ; TODO: On page leave
+      ; System::Call "comctl32::ImageList_Destroy(i R0)"
+
+      /* IntOp $3 $0 + 3
+      nsDialogs::CreateControl "STATIC" ${DEFAULT_STYLES} 0 0% "$3%" 10% 26% ""
+      Pop $3
+      SetCtlColors $3 "" 0xE2E2E2 */
+
+      ${NSD_CreateGroupBox} 10% "$0%" 90% 30% ""
       Pop $jsonValidationBoxVBS
 
-        ${NSD_CreateLabel} 5% "$1%" 15% 12u "App groups:"
+        ${NSD_CreateLabel} 14% "$1%" 15% 12u "App groups:"
         Pop $appGroupsLabelInfoVBS
 
-        ${NSD_CreateLabel} 20% "$1%" 10% 12u ""
+        ${NSD_CreateLabel} 30% "$1%" 8% 12u ""
         Pop $appGroupsInfoVBS
 
-        ${NSD_CreateLabel} 5% "$2%" 15% 12u "Apps:"
+        ${NSD_CreateLabel} 14% "$2%" 15% 12u "Apps:"
         Pop $appsLabelInfoVBS
 
-        ${NSD_CreateLabel} 20% "$2%" 10% 12u ""
+        ${NSD_CreateLabel} 30% "$2%" 8% 12u ""
         Pop $appsInfoVBS
 
-        ${NSD_CreateVLine} 35% "$1%" 0u 24u ""
+        ${NSD_CreateVLine} 42% "$1%" 0u 24u ""
         Pop $vLineValidationVBS
 
-        ${NSD_CreateLabel} 40% "$1%" 55% 12u ""
+        ${NSD_CreateLabel} 48% "$1%" 47% 12u ""
         Pop $validationStatusInfoVBS
 
-        ${NSD_CreateLabel} 40% "$2%" 55% 12u ""
+        ${NSD_CreateLabel} 48% "$2%" 47% 12u ""
         Pop $validationMsgInfoVBS
 
     FunctionEnd
@@ -550,7 +611,7 @@
           ${NSD_SetText} $appsInfoVBS "..."
 
           ${NSD_SetText} $validationStatusInfoVBS "Validation status: \
-            ............................ LOADING"
+            ................... LOADING"
           ${NSD_SetText} $validationMsgInfoVBS ""
 
         ; Success status
@@ -559,7 +620,7 @@
           ${AP_SET_UI_NUM_LIMIT} $appsInfoVBS $jsonCountAppsVBS 3
 
           ${NSD_SetText} $validationStatusInfoVBS "Validation status: \
-            .................................... OK"
+            ........................... OK"
           ${NSD_SetText} $validationMsgInfoVBS "Bundle validated successfully."
 
         ; Error status when a message is pushed to the stack
@@ -568,7 +629,7 @@
           ${NSD_SetText} $appsInfoVBS "X"
 
           ${NSD_SetText} $validationStatusInfoVBS "Validation status: \
-            ............................... ERROR"
+            ...................... ERROR"
           ${NSD_SetText} $validationMsgInfoVBS "$0"
 
           ; Enable the back button
@@ -692,8 +753,7 @@
         ; could be a workaround:
         ; https://nsis.sourceforge.io/Unicode_plug-in
         ;
-        ; ** Maybe it is not a bug, in the Example.nsi no /unicode switch
-        ; is used for UTF-8 **
+        ; The /unicode switch does not work even with BOM in UTF-8.
         nsJSON::Set /file "$0"
         ${If} ${Errors}
           Push "The JSON bundle could not be opened."
@@ -849,9 +909,9 @@
           ${NSD_Return} 1
         ${EndIf}
 
-        ${If} $R1 = 2 ; Checked
+        ${If} $R1 == 2  ; Checked
           IntOp $currentAppsSelectedCAS $currentAppsSelectedCAS + 1
-        ${ElseIf} $R1 = 1 ; Unchecked
+        ${ElseIf} $R1 == 1  ; Unchecked
           IntOp $currentAppsSelectedCAS $currentAppsSelectedCAS - 1
         ${EndIf}
 
@@ -866,7 +926,7 @@
         System::Call "*$2(i, i, i, i, i, i .R0, i .R1)"
 
         ; Get the description string by using the lparam buffer
-        System::Call "*$R1(i, t .r3, t)"
+        System::Call "*$R1(i, i, t, t .r3, t)"
 
         ; Check if the item has a description, as it is optional
         ${If} $3 == ""

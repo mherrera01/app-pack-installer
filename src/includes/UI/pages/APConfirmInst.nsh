@@ -247,7 +247,7 @@
       Pop $0
 
       ; If GetDiskFreeSpaceEx fails, the return value is 0
-      ${If} $0 = 0
+      ${If} $0 == 0
 
       ; Int64Op handles signed integers, and hence, the most
       ; significant bit is used. The number of bytes from

@@ -1,7 +1,7 @@
 ; File: TreeViewControl.nsh
 ; Author: Miguel Herrera
 
-; UI support for the Win32 tree view. Commctrl.h header documentation:
+; UI support for the Win32 tree view
 ; https://learn.microsoft.com/en-us/windows/win32/controls/tree-view-control-reference
 
 ; Styles
@@ -14,33 +14,33 @@
 !define TVS_FULLROWSELECT   0x1000
 
 ; Messages
-!define TVM_INSERTITEM   0x1132 ; 0X1100 for ASCII
+!define TVM_INSERTITEM   0x1132  ; 0X1100 for ASCII
 !define TVM_EXPAND       0x1102
 !define TVM_GETCOUNT     0x1105
 !define TVM_SELECTITEM   0x110B
-!define TVM_SETITEM      0x113F ; 0x110D for ASCII
-!define TVM_GETITEM      0x113E ; 0x110C for ASCII
+!define TVM_SETITEM      0x113F  ; 0x110D for ASCII
+!define TVM_GETITEM      0x113E  ; 0x110C for ASCII
 !define TVM_GETITEMSTATE 0x1127
 
 ; Notifications
 !define NM_TVSTATEIMAGECHANGING -24
-!define TVN_GETINFOTIP          -414 ; -413 for ASCII
-!define TVN_SELCHANGED          -451 ; -402 for ASCII
+!define TVN_GETINFOTIP          -414  ; -413 for ASCII
+!define TVN_SELCHANGED          -451  ; -402 for ASCII
 
 ; Insert item types (TVINSERTSTRUCT)
-!define TVI_ROOT  0xFFFF0000 ; As a root item
-!define TVI_FIRST 0xFFFF0001 ; At the beginning of the list
-!define TVI_LAST  0xFFFF0002 ; At the end of the list
-!define TVI_SORT  0xFFFF0003 ; In alphabetical order
+!define TVI_ROOT  0xFFFF0000  ; As a root item
+!define TVI_FIRST 0xFFFF0001  ; At the beginning of the list
+!define TVI_LAST  0xFFFF0002  ; At the end of the list
+!define TVI_SORT  0xFFFF0003  ; In alphabetical order
 
 ; Item flags that indicate the members of the TVITEM structure with valid data
-!define TVIF_TEXT          0x0001 ; pszText and cchTextMax
-!define TVIF_IMAGE         0x0002 ; iImage
-!define TVIF_PARAM         0x0004 ; lParam
-!define TVIF_STATE         0x0008 ; state and stateMask
-!define TVIF_HANDLE        0x0010 ; hItem
-!define TVIF_SELECTEDIMAGE 0x0020 ; iSelectedImage
-!define TVIF_CHILDREN      0x0040 ; cChildren
+!define TVIF_TEXT          0x0001  ; pszText and cchTextMax
+!define TVIF_IMAGE         0x0002  ; iImage
+!define TVIF_PARAM         0x0004  ; lParam
+!define TVIF_STATE         0x0008  ; state and stateMask
+!define TVIF_HANDLE        0x0010  ; hItem
+!define TVIF_SELECTEDIMAGE 0x0020  ; iSelectedImage
+!define TVIF_CHILDREN      0x0040  ; cChildren
 
 ; Item states (state and stateMask parameters of the TVITEM structure)
 !define TVIS_SELECTED       0x0002
