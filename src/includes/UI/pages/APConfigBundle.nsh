@@ -306,8 +306,7 @@
           IntOp $R0 ${TVS_CHECKBOXES} | $R0
           System::Call "user32::SetWindowLong(i $appsTreeViewCAS, i ${GWL_STYLE}, i R0)"
 
-          GetFunctionAddress $0 onTreeViewNotifyCAS
-          nsDialogs::OnNotify $appsTreeViewCAS $0
+          ${NSD_OnNotify} $appsTreeViewCAS onTreeViewNotifyCAS
 
           ${NSD_CreateGroupBox} 65% 30% 34% 55% "Description"
           Pop $appDescBoxCAS
@@ -503,10 +502,10 @@
       ; The width and height of the toolbar is defined by the
       ; buttons later included
       IntOp $3 $0 + 3
-      ${TBR_V_CREATE} 1% "$3%"
+      ${TBR_V_CREATE} 1% "$3%" ${TBR_DIVIDER}
       Pop $3
 
-      ; Create an image list of 24x24 pixels
+      ; Create an image list of 23x23 pixels
       ; ILC_MASK = 0x0001, ILC_COLOR32 = 0x0020
       System::Call "comctl32::ImageList_Create(i 23, i 23, i 0x0001|0x0020, i 2, i 0) i .r4"
 
@@ -519,19 +518,14 @@
       ; Add the icon handle, returned by AP_LOAD_ICON, to the image list
       System::Call "comctl32::ImageList_AddIcon(i r4, i $exportBundleIconVBS) i .r5"
       System::Call "comctl32::ImageList_AddIcon(i r4, i $bundleDetailsIconVBS) i .r6"
-      ${TBR_SET_IMAGE_LIST} $3 $4
+      ${TBR_SET_DEF_ILIST} $3 $4
 
       ; Use I_IMAGENONE to indicate that the button does not have an image
-      ${TBR_V_INSERT_BUTTON} $3 0 $5 ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Export logfile" ; Export logfile
-      ${TBR_V_INSERT_BUTTON} $3 1 $6 ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details" ; Show bundle details
+      ${TBR_INSERT_BUTTON} $3 0 $5 ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Export logfile"
+      ${TBR_INSERT_BUTTON} $3 1 $6 ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
+      ${TBR_END_RESIZE} $3
 
-      ; A function on the interface is required after inserting the buttons
-      ; TBR_V_SET_SIZE (maybe an option for having all the buttons of the same size?)
-      ; While loop (TB_BUTTONCOUNT ++), TB_SETBUTTONSIZE (MAX(TB_GETITEMRECT))
-      ; This function is required to adjust the width of the VERTICAL toolbar
-      ; (fixed or not). Also use this for HORIZONTAL toolbar would be nice
-      ; with TB_GETMAXSIZE (not to use TB_AUTOSIZE:
-      ; https://github.com/wxWidgets/wxWidgets/blob/8ea22b5e92bf46add0b20059f6e39a938858ff97/src/msw/toolbar.cpp#L1819)
+      ${NSD_OnNotify} $3 onBundleTbrOptionsVBS
 
       ; TODO: On page leave
       ; System::Call "comctl32::ImageList_Destroy(i R0)"
@@ -846,6 +840,25 @@
 
       FunctionEnd
 
+      Function onBundleTbrOptionsVBS
+
+        Pop $0  ; UI handle
+        Pop $1  ; Message code
+        Pop $2  ; A pointer to the NMHDR stucture
+
+        ; A toolbar button has been clicked
+        ${If} $1 = ${NM_CLICK}
+
+          ; Get the button identifier from the NMMOUSE structure
+          System::Call "*$2(i, i, i, i .R0, i, i, i, i)"
+
+          ; TODO
+          MessageBox MB_OK "Button $R0 was clicked!"
+
+        ${EndIf}
+
+      FunctionEnd
+
     ;--------------------------------
     ; Thread routines
 
@@ -886,8 +899,8 @@
 
     Function onTreeViewNotifyCAS
 
-      Pop $0 ; UI handle
-      Pop $1 ; Message code
+      Pop $0  ; UI handle
+      Pop $1  ; Message code
 
       ; A pointer to the NMHDR stucture. For some notification
       ; messages, this parameter points to a larger structure

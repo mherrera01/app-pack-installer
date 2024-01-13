@@ -38,69 +38,77 @@
     System::Call "comctl32::ImageList_AddIcon(i $iListTest, i $icon2Test) i .s"
     Pop $iIcon2Test
 
-    ${TBR_V_CREATE} 40% 10%
+    /* ${TBR_V_CREATE} 60% 20% ${TBR_DIVIDER}
     Pop $0
-    ${TBR_SET_IMAGE_LIST} $0 $iListTest
+    ${TBR_SET_BTN_PADDING} $0 8 12
+    ; ${TBR_SET_DEF_ILIST} $0 ""
 
     ; Use I_IMAGENONE to indicate that the button does not have an image
-    ${TBR_V_INSERT_BUTTON} $0 0 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Export logfile"
-    ${TBR_V_INSERT_BUTTON} $0 1 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
-    ${TBR_V_INSERT_BUTTON} $0 2 ${I_IMAGENONE} ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} ""
-    ${TBR_V_INSERT_BUTTON} $0 3 $iIcon2Test ${TBRI_DISABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
-    ${TBR_V_INSERT_BUTTON} $0 4 $iIcon2Test ${TBRI_DISABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
-    ${TBR_V_INSERT_BUTTON} $0 5 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
+    ${TBR_INSERT_BUTTON} $0 0 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Export logfile"
+    ${TBR_INSERT_BUTTON} $0 1 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
+    ${TBR_INSERT_BUTTON} $0 2 ${I_IMAGENONE} ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} ""
+    ${TBR_INSERT_BUTTON} $0 3 ${I_IMAGENONE} ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Only this text"
+    ${TBR_INSERT_BUTTON} $0 4 $iIcon2Test ${TBRI_DISABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
+    ${TBR_INSERT_SEP} $0
+    ${TBR_INSERT_BUTTON} $0 5 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Show bundle details"
 
-    System::Call "user32::GetClientRect(i r0, @ r1)"
-    System::Call "*$1(i, i, i .r2, i .r3)"
-    MessageBox MB_OK "x = $2, y = $3"
+    ; Free the internal data and resize the toolbar
+    ${TBR_END_RESIZE} $0
 
-    nsDialogs::CreateControl "STATIC" ${DEFAULT_STYLES} 0 39% 9% 30% 91% ""
+    GetFunctionAddress $1 onToolbarNotifyTest
+    nsDialogs::OnNotify $0 $1
+
+    ${TBR_H_CREATE} 8% 30% ${TBR_NO_DIVIDER}
     Pop $0
-    SetCtlColors $0 "" 0xE2E2E2
+    ${TBR_SET_DEF_ILIST} $0 $iListTest
+
+    ${TBR_INSERT_BUTTON} $0 0 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Tooltip"
+    ${TBR_INSERT_BUTTON} $0 1 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Tooltip 2"
+    ${TBR_INSERT_SEP} $0
+    ${TBR_INSERT_BUTTON} $0 2 ${I_IMAGENONE} ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Just text"
+    ${TBR_INSERT_SEP} $0
+    ${TBR_INSERT_BUTTON} $0 3 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Click here"
+
+    ${TBR_END_RESIZE} $0 */
+
+    ; --- HORIZONTAL FIXED ---
+
+    ${TBR_H_CREATE_FIXED} ${TBR_NO_DIVIDER}
+    Pop $0
+    ${TBR_SET_DEF_ILIST} $0 $iListTest
+
+    ${TBR_INSERT_BUTTON} $0 0 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Tooltip"
+    ${TBR_INSERT_BUTTON} $0 1 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Tooltip 2"
+    ${TBR_INSERT_SEP} $0
+    ${TBR_INSERT_BUTTON} $0 2 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Activate"
+    ${TBR_INSERT_BUTTON} $0 3 ${I_IMAGENONE} ${TBRI_DISABLED} ${TBRI_SHOW_LABEL} "Disabled for now"
+
+    ${TBR_END_RESIZE} $0
+
+    GetFunctionAddress $1 onToolbarNotifyTest
+    nsDialogs::OnNotify $0 $1
 
     ; --- VERTICAL FIXED ---
 
-    ${TBR_V_CREATE_FIXED}
+    /* ${TBR_V_CREATE_FIXED} ${TBR_DIVIDER}
     Pop $0
-    ${TBR_SET_IMAGE_LIST} $0 $iListTest
+    ${TBR_SET_DEF_ILIST} $0 $iListTest
+    ${TBR_SET_BTN_PADDING} $0 10 10
 
-    ${TBR_V_INSERT_BUTTON} $0 0 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Export logfile"
-    ${TBR_V_INSERT_BUTTON} $0 1 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_TOOLTIP} "Show bundle details"
+    ${TBR_INSERT_BUTTON} $0 0 $iIcon1Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Paint"
+    ${TBR_INSERT_BUTTON} $0 1 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Add Text"
+    ${TBR_INSERT_BUTTON} $0 2 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Highlight"
+    ${TBR_INSERT_BUTTON} $0 3 $iIcon2Test ${TBRI_ENABLED} ${TBRI_SHOW_LABEL} "Remove"
 
-    nsDialogs::CreateControl "STATIC" ${DEFAULT_STYLES} 0 0% 0% 30% 100% ""
+    ${TBR_END_RESIZE} $0
+
+    System::Call "user32::GetClientRect(i r0, @ r1)"
+    System::Call "*$1(i, i, i .r2, i .r3)"
+    MessageBox MB_OK "x = $2, y = $3" */
+
+    nsDialogs::CreateControl "STATIC" ${DEFAULT_STYLES} 0 0% 0% 100% 100% ""
     Pop $0
     SetCtlColors $0 "" 0xE2E2E2
-
-    /* System::Call "user32::GetClientRect(i r0, @ r1)"
-    System::Call "*$1(i, i, i .r2, i .r3)"
-
-    ; This should be called only once, in the core UI
-    ${NSD_InitCommonControlsEx} ${ICC_COOL_CLASSES}
-
-    ; Why padding is added at the begginning of the rebar. Without visual styles this does not happen
-    IntOp $4 $3 + 4
-
-    ; CCS_NORESIZE = 0x0004, CCS_NOPARENTALIGN = 0x0008, CCS_VERT = 0x0080
-    nsDialogs::CreateControl "ReBarWindow32" ${WS_CHILD}|${WS_VISIBLE}|${WS_TABSTOP}|${WS_CLIPSIBLINGS}|\
-      ${CCS_NODIVIDER}|0x0004|0x0008|0x0080 0 30% 40% "$2" "$4" ""
-    Pop $1
-
-    ; System::Call "uxtheme::SetWindowTheme(i r1, t '', t '')"
-
-    ; RB_SETBKCOLOR = 0x0413
-    ; SendMessage $1 0x0413 0 0x00DCDCDC
-
-    ; RB_GETBKCOLOR = 0x0414
-    ; SendMessage $1 0x0414 0 0 $4
-    ; MessageBox MB_OK "$4"
-
-    ; RBBIM_STYLE = 0x0001, RBBIM_COLORS = 0x0002, RBBIM_CHILD = 0x0010, RBBIM_CHILDSIZE = 0x0020, RBBIM_HEADERSIZE = 0x0800
-    ; RBBS_FIXEDSIZE = 0x0002, RBBS_CHILDEDGE = 0x0004, RBBS_GRIPPERALWAYS = 0x0080, RBBS_NOGRIPPER = 0x0100
-    ; Vertical: cxMinChild and cx are vertical and cyMinChild is horizontal
-    System::Call "*(&l4, i 0x0001|0x0002|0x0010|0x0020|0x0800, i 0x0002|0x0100, i, i 0x00F8F8F8, t, i, i, i r0, i r3, i r2, i, i, i, i, i, i, i, i, i 0, i, i, i, i, i) i .R0"
-
-    ; RB_INSERTBAND (unicode) = 0x040A
-    SendMessage $1 0x040A 0 $R0 */
 
     nsDialogs::Show
 
@@ -111,6 +119,26 @@
     System::Call "user32::DestroyIcon(i $icon1Test)"
     System::Call "user32::DestroyIcon(i $icon2Test)"
     System::Call "comctl32::ImageList_Destroy(i $iListTest)"
+
+  FunctionEnd
+
+  Function onToolbarNotifyTest
+
+    Pop $0  ; UI handle
+    Pop $1  ; Message code
+    Pop $2  ; A pointer to the NMHDR stucture
+
+    ; A toolbar button has been clicked
+    ${If} $1 = ${NM_CLICK}
+
+      ; Get the button identifier from the NMMOUSE structure
+      System::Call "*$2(i, i, i, i .R0, i, i, i, i)"
+
+      ${If} $R0 == 2
+        ${TBR_TOGGLE_BUTTON} $0 3 1
+      ${EndIf}
+
+    ${EndIf}
 
   FunctionEnd
 
