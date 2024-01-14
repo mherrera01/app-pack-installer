@@ -246,7 +246,7 @@
 
         Push "${hwndTBR}"
         Push "${__TBRI_STATE_${userInput}}"
-        Push "${TBB_BUTTON}|${__TBRI_STYLE_${textDisplay}}"
+        Push "${TBB_BUTTON}|${TBB_AUTOSIZE}|${__TBRI_STYLE_${textDisplay}}"
         Push "${id}"
         Push "${imgIndex}"
         Push "${text}"
