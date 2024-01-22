@@ -14,7 +14,7 @@
 !define TVS_FULLROWSELECT   0x1000
 
 ; Messages
-!define TVM_INSERTITEM   0x1132  ; 0X1100 for ASCII
+!define TVM_INSERTITEM   0x1132  ; 0x1100 for ASCII
 !define TVM_EXPAND       0x1102
 !define TVM_GETCOUNT     0x1105
 !define TVM_SELECTITEM   0x110B

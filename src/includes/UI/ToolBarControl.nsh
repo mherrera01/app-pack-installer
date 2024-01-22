@@ -231,31 +231,14 @@
 
     !macro __CALL_TBR_INSERT_BUTTON hwndTBR id imgIndex userInput textDisplay text
 
-      ; The button will not be inserted if there is nothing to display
-      !if "${imgIndex}" == "${I_IMAGENONE}"
-        !if "${textDisplay}" == "${TBRI_SHOW_LABEL}"
-          !if "${text}" == ""
-            !define __TBRI_SKIP_BUTTON
-          !endif
-        !else
-          !define __TBRI_SKIP_BUTTON
-        !endif
-      !endif
+      Push "${hwndTBR}"
+      Push "${__TBRI_STATE_${userInput}}"
+      Push "${TBB_BUTTON}|${TBB_AUTOSIZE}|${__TBRI_STYLE_${textDisplay}}"
+      Push "${id}"
+      Push "${imgIndex}"
+      Push "${text}"
 
-      !ifndef __TBRI_SKIP_BUTTON
-
-        Push "${hwndTBR}"
-        Push "${__TBRI_STATE_${userInput}}"
-        Push "${TBB_BUTTON}|${TBB_AUTOSIZE}|${__TBRI_STYLE_${textDisplay}}"
-        Push "${id}"
-        Push "${imgIndex}"
-        Push "${text}"
-
-        ${CallArtificialFunction} __TBR_INSERT_BUTTON
-
-      !else
-        !undef __TBRI_SKIP_BUTTON
-      !endif
+      ${CallArtificialFunction} __TBR_INSERT_BUTTON
 
     !macroend
 

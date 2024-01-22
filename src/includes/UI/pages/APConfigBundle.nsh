@@ -352,8 +352,8 @@
         ${AP_LOAD_BUNDLE_FILE} $jsonFileInputStateCBP "bundlePropArray" "bundleDataArray" $appsTreeViewCAS
         Pop $0
 
-        System::Call "*$0(t .R0, t .R1, i .R2, i .R3)"
-        MessageBox MB_OK "$R0 | $R1 | $R2, $R3"
+        System::Call "*$0(t .R0, t .R1, i .R2, i .R3, t .R4)"
+        MessageBox MB_OK "$R0 | $R1 | $R2, $R3 | $R4"
         System::Free $0
 
         EnableWindow $trustCustomBundleCheckVBS 1
@@ -852,8 +852,26 @@
           ; Get the button identifier from the NMMOUSE structure
           System::Call "*$2(i, i, i, i .R0, i, i, i, i)"
 
-          ; TODO
-          MessageBox MB_OK "Button $R0 was clicked!"
+          ; Export logfile
+          ${If} $R0 == 0
+
+            nsDialogs::SelectFolderDialog "Select a folder to export the logfile." "$EXEDIR\"
+            Pop $0
+
+            ; Check if the user cancels the operation or an error ocurrs
+            ${If} $0 != "error"
+
+              CopyFiles /SILENT "$PLUGINSDIR\bundleLoad.log" "$0"
+              ${If} ${Errors}
+                ClearErrors
+                MessageBox MB_ICONEXCLAMATION "The logfile could not be exported."
+              ${Else}
+                MessageBox MB_OK "Logfile exported successfully."
+              ${EndIf}
+
+            ${EndIf}
+
+          ${EndIf}
 
         ${EndIf}
 
