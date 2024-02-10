@@ -18,6 +18,7 @@
   !addincludedir ".\includes\UI"
 
   !include "APBundleParser.nsh"
+  !include "APBundleLoad.nsh"
   !include "APCoreUI.nsh"
 
 ;--------------------------------

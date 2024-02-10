@@ -342,12 +342,12 @@
         SendMessage $0 ${TBRM_BUTTONCOUNT} 0 0 $R6
         IntOp $R6 $R6 - 1
 
+        System::Call "*(i, i, i, i) i .r1"
+
         ${ForEach} $R7 0 $R6 + 1
 
-          System::Call "*(i, i, i, i) i .r1"
           SendMessage $0 ${TBRM_GETITEMRECT} $R7 $1
           System::Call "*$1(i .r2, i .r3, i .r4, i .r5)"
-          System::Free $1
 
           ; Calculate the size of the button inserted
           IntOp $4 $4 - $2  ; right - left = width
@@ -360,6 +360,8 @@
           ${EndIf}
 
         ${Next}
+
+        System::Free $1
 
         ; Get the size of the inner dialog where the toolbar is placed
         FindWindow $1 "#32770" "" $HWNDPARENT

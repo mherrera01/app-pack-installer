@@ -349,10 +349,10 @@
         ; Call validateJsonBundleVBS
 
         ; TESTS OF THE BUNDLE FILE LOAD
-        ${AP_LOAD_BUNDLE_FILE} $jsonFileInputStateCBP "bundlePropArray" "bundleDataArray" $appsTreeViewCAS
+        ${AP_SHOW_BUNDLE} $jsonFileInputStateCBP "$PLUGINSDIR\bundleLoad.log" "bundlePropArray" "bundleDataArray" $appsTreeViewCAS
         Pop $0
 
-        System::Call "*$0(t .R0, t .R1, i .R2, i .R3, t .R4)"
+        System::Call "*$0(t .R0, t .R1, i .R2, i .R3, i .R4)"
         MessageBox MB_OK "$R0 | $R1 | $R2, $R3 | $R4"
         System::Free $0
 
@@ -861,7 +861,7 @@
             ; Check if the user cancels the operation or an error ocurrs
             ${If} $0 != "error"
 
-              CopyFiles /SILENT "$PLUGINSDIR\bundleLoad.log" "$0"
+              CopyFiles "$PLUGINSDIR\bundleLoad.log" "$0"
               ${If} ${Errors}
                 ClearErrors
                 MessageBox MB_ICONEXCLAMATION "The logfile could not be exported."
@@ -956,18 +956,8 @@
         ; NMTVGETINFOTIP structure
         System::Call "*$2(i, i, i, i, i, i .R0, i .R1)"
 
-        ; Get the description string by using the lparam buffer
-        System::Call "*$R1(i, i, t, t .r3, t)"
-
-        ; Check if the item has a description, as it is optional
-        ${If} $3 == ""
-
-          ; Show the item name if there is no description
-          ${TV_GET_ITEM_TEXT} $appsTreeViewCAS $R0
-          Pop $3
-
-        ${EndIf}
-
+        ; Show the description (name if empty) by using the lparam buffer
+        ${AP_BITEM_GET_INFOTIP} $R1 $3
         ${NSD_SetText} $appDescInfoCAS "$3"
         EnableWindow $appDescInfoCAS 1
 
