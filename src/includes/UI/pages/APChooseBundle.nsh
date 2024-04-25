@@ -240,14 +240,41 @@
       ; Get the directory from the UI component
       ${NSD_GetText} $jsonFileInputCBP $0
 
-      ; Open a window to select a JSON file
+      ; Open a window to select the bundle file
       nsDialogs::SelectFileDialog open "$0" ".txt files|*.txt"
       Pop $0
       ${If} $0 != ""
-        ${NSD_SetText} $jsonFileInputCBP "$0"
 
-        ; Enable the next button as a JSON file is selected
-        EnableWindow $nextButtonCBP 1
+        ; Check the file selected
+        ClearErrors
+        FileOpen $1 $0 r
+
+        ${If} ${Errors}
+
+          ClearErrors
+          MessageBox MB_ICONEXCLAMATION "The bundle file could not be opened."
+
+        ${Else}
+
+          ; Get the size in bytes of the bundle file
+          System::Call "kernel32::GetFileSizeEx(i r1, *l .r2) i .r3"
+
+          ${If} $3 != 0
+          ${AndIf} $2 L<= ${AP_BFILE_MAX_BYTES}
+
+            ${NSD_SetText} $jsonFileInputCBP "$0"
+
+            ; Enable the next button as a bundle file was selected
+            EnableWindow $nextButtonCBP 1
+
+          ${Else}
+            MessageBox MB_ICONEXCLAMATION "The bundle file cannot be larger than 10 MB."
+          ${EndIf}
+
+          FileClose $1
+
+        ${EndIf}
+
       ${EndIf}
 
     FunctionEnd

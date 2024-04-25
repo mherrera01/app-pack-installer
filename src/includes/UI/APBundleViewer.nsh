@@ -31,6 +31,9 @@
 
   !macro __AP_SHOW_BUNDLE
 
+    ; Define a unique ID for the labels used in the macro
+    !define LABEL_ID ${__LINE__}
+
     ; logFile ($4), bundleFile ($3), bundleData ($2), bundleProp ($1) and treeViewUI ($0)
     System::Store Sr4r3r2r1r0
 
@@ -48,48 +51,87 @@
     ${If} ${Errors}
 
       ClearErrors
-      System::Call "*$R0(t 'ERROR', t 'The bundle file could not be opened.', i, i, i)"
-      Goto endBundleLoad
+      System::Call "*$R0(t 'ERROR', t 'The bundle file could not be opened.')"
+      Goto endBundleLoad_${LABEL_ID}
 
     ${EndIf}
 
-    ; Use Unicode plug-in and convert to UTF-16LE (default Windows) if
-    ; required. Then, read that encoding with FileReadUTF16LE (line by line,
-    ; maybe there is a problem with NSIS_MAX_STRLEN??)
+    ${AP_SKIP_BFILE_BOM} $R1 $5 $6
 
-    ; https://github.com/AutoItConsulting/text-encoding-detect/blob/master/README.md
-    ; 1. Detect if there is a BOM --> unicode::UnicodeType returns "None"
-    ; if there is no BOM.
-    ; In UTF-16 is normal to have a BOM, to differentiate between LE and BE (Notepad++
-    ; adds a BOM by default).
-    ; Nevertheless, UTF-8 does not require a BOM (Notepad++ always creates a file in
-    ; UTF-8 without BOM)
-    ; 2. Now, the problem is to distinguish between Windows-1252 (ANSI by default in
-    ; Windows) and UTF-8 without BOM. Nowadays, UTF-8 is the standard to allow
-    ; unicode.
-    ;
-    ; MultiByteToWideChar --> From UTF-8 (CP_UTF8) or Windows-1252/ANSI (CP_ACP) to
-    ; UTF-16LE (Default Unicode in Windows)
-    ; WideCharToMultiByte --> From UTF-16LE to UTF-8 (CP_UTF8) or Windows-1252/ANSI (CP_ACP)
+    ; UTF-32 not supported
+    ${If} $5 == "${AP_BFILE_ENC_UTF32_LE}"
+    ${OrIf} $5 == "${AP_BFILE_ENC_UTF32_BE}"
 
-    ; Create, or overwrite if it already exists, a log to record
-    ; the parser operations
-    FileOpen $R2 $4 w
+      System::Call "*$R0(t 'ERROR', t 'The UTF-32 encoding is not supported.')"
+      FileClose $R1
+      Goto endBundleLoad_${LABEL_ID}
 
-    ; TODO: Write a line to the logfile about STARTING LOADING OF BUNDLE $name ...
+    ${EndIf}
 
-    ; Check if the logfile has been created
-    IfErrors +3
+    ;--------------------------------
+    ; Conversion to Unicode (UTF-16LE)
 
-    ; Write UTF-16LE BOM at the beginning of the logfile
-    FileWriteByte $R2 0xFF
-    FileWriteByte $R2 0xFE
+      ; Check if the file is already in the correct encoding
+      StrCmp $5 "${AP_BFILE_ENC_UTF16_LE}" createLogFile_${LABEL_ID}
+
+      ; Convert the file to UTF-16LE
+      ${AP_BFILE_TO_UNICODE} $R1 $5 $6
+      Pop $7
+
+      MessageBox MB_OK "BOM: $5 | 16-bit code units: $7"
+      System::Call "*$6(&w$7 .r8)"
+
+      MessageBox MB_OK "$8"
+      IntCmp $6 0 failUnicodeConv_${LABEL_ID}
+
+      ; Create the Unicode file
+      /* FileOpen $8 "$PLUGINSDIR\temp_bfile_unicode.txt" w
+      IfErrors failUnicodeConv_${LABEL_ID}
+
+      ; Write UTF-16LE BOM
+      FileWriteByte $8 0xFF
+      FileWriteByte $8 0xFE
+
+      System::Call "kernel32::WriteFile(i r8, i r6, i r7, *i .r5, i 0) i .r7"
+      ${If} $7 != 0
+      ${OrIf} $5 > 0
+        StrCpy $R0 1
+      ${EndIf} */
+
+      System::Free $6
+      Goto createLogFile_${LABEL_ID}
+
+      failUnicodeConv_${LABEL_ID}:
+
+        System::Free $6
+
+        System::Call "*$R0(t 'ERROR', t 'The bundle file could be loaded as Unicode.')"
+        FileClose $R1
+        Goto endBundleLoad_${LABEL_ID}
+
+    createLogFile_${LABEL_ID}:
+
+      ; Create, or overwrite if it already exists, a log to record
+      ; the parser operations
+      FileOpen $R2 $4 w
+
+      ; Check if the logfile has been created
+      ${IfNot} ${Errors}
+
+        ; Write UTF-16LE BOM at the beginning of the logfile
+        FileWriteByte $R2 0xFF
+        FileWriteByte $R2 0xFE
+
+        ${GetFileName} $3 $5
+        ${AP_WRITE_BUNDLE_LOG} $R2 "Loading the bundle file $5..."
+
+      ${EndIf}
 
     ; Clear the arrays
     nsArray::Clear $1
     ${AP_FREE_BDATA_ARRAY} $2
 
-    ; The error flag is set if an array does not exist
+    ; Ignore error flag
     ClearErrors
 
     ; TODO: Remove the elements in the treeview
@@ -104,7 +146,9 @@
 
     ${Do}
 
-      ; Read a line in UTF-16LE encoding (unicode)
+      ; Read a line in UTF-16LE encoding (Unicode). The string
+      ; is limited to 1023 characters (+1 null terminator).
+      ; TODO: WHEN REACHING THE CHARS LIMIT, IT CONTINUES IN THE SAME LINE
       FileReadUTF16LE $R1 $3
 
       ; The error flag is set with EOF (End Of File)
@@ -139,7 +183,7 @@
       ${If} $4 == ${EV_TRANSITION}
 
         ; Exit actions (current state)
-        ${Switch} $R6
+        ${Select} $R6
 
           ${Case} ${ST_NODE_PROP}
 
@@ -150,18 +194,19 @@
             ; Insert the app group to the tree view
             ${TV_INSERT_ITEM} $0 ${TVI_ROOT} $7 $R3
             Pop $R4
+
             ${TV_SET_ITEM_CHECK} $0 $R4 0
+            StrCpy $R3 0
 
             ; Increase the number of app groups
             IntOp $R7 $R7 + 1
             ${AP_WRITE_BUNDLE_LOG} $R2 "[OK] App group '$7' loaded correctly"
 
-            ${Break}
-
           ${Case} ${ST_SUBNODE_PROP}
 
             ; Get the app properties
-            System::Call "*$R3(i, t .r7, t, i, t .r8)"
+            ${AP_BITEM_GET_NAME} $R3 $7
+            ${AP_APP_GET_URL} $R3 $8
 
             ; Ignore app if there is no setup URL
             ${If} $8 == ""
@@ -173,6 +218,7 @@
               ; Insert the app to the group in the tree view
               ${TV_INSERT_ITEM} $0 $R4 $7 $R3
               Pop $8
+              StrCpy $R3 0
 
               ; Increase the number of apps
               IntOp $R8 $R8 + 1
@@ -180,25 +226,19 @@
 
             ${EndIf}
 
-            ${Break}
-
-        ${EndSwitch}
+        ${EndSelect}
 
         ; Entry actions (next state)
-        ${Switch} $5
+        ${Select} $5
 
           ${Case} ${ST_NODE_PROP}
 
-            ${AP_BIDATA_AGRP} $6
-            Pop $R3
+            ${AP_BIDATA_AGRP} $6 $R3
             StrCpy $R4 0  ; Reset the app group handle
-            ${Break}
 
           ${Case} ${ST_SUBNODE_PROP}
 
-            ${AP_BIDATA_APP} $6
-            Pop $R3
-            ${Break}
+            ${AP_BIDATA_APP} $6 $R3
 
           ${Case} ${ST_END_OK}
 
@@ -209,10 +249,10 @@
           ${Case} ${ST_END_ERROR}
 
             ${AP_WRITE_BUNDLE_LOG} $R2 "[ERROR] $6"
-            System::Call "*$R0(t 'ERROR', t r6, i 0, i 0, i)"
+            System::Call "*$R0(t 'ERROR', t r6)"
             ${ExitDo}
 
-        ${EndSwitch}
+        ${EndSelect}
 
       ; Internal activities
       ${ElseIf} $4 == ${EV_INT_ACTIVITY}
@@ -224,37 +264,32 @@
         ${If} $4 == 1
 
           ; Within the current state
-          ${Switch} $R6
+          ${Select} $R6
 
             ${Case} ${ST_GEN_PROP}
 
               nsArray::Set $1 /key=$7 $8
-              StrCpy $9 "[OK] General property '$7' with the value: $8"
-              ${Break}
+              ${AP_WRITE_BUNDLE_LOG} $R2 "[OK] General property '$7' with the value: $8"
 
             ${Case} ${ST_NODE_PROP}
 
-              ${AP_SET_AGRP_PROP} $R3 $7 $8
+              ${AP_AGRP_SET_PROP} $R3 $7 $8
               Pop $9
-              ${Break}
+              ${AP_WRITE_BUNDLE_LOG} $R2 "$9"
 
             ${Case} ${ST_SUBNODE_PROP}
 
-              ${AP_SET_APP_PROP} $R3 $7 $8
+              ${AP_APP_SET_PROP} $R3 $7 $8
               Pop $9
-              ${Break}
+              ${AP_WRITE_BUNDLE_LOG} $R2 "$9"
 
-          ${EndSwitch}
-
-          ${AP_WRITE_BUNDLE_LOG} $R2 "$9"
+          ${EndSelect}
 
         ${Else}
 
           ; Format error while parsing the bundle
-          ${AP_WRITE_BUNDLE_LOG} $R2 "[ERROR] Incorrect file format in line $R5."
-          System::Call "*$R0(t 'ERROR', t 'Incorrect file format in line $R5.', i 0, i 0, i)"
-
-          System::Free $R3
+          ${AP_WRITE_BUNDLE_LOG} $R2 "[ERROR] Incorrect file format in line $R5"
+          System::Call "*$R0(t 'ERROR', t 'Incorrect file format in line $R5.')"
           ${ExitDo}
 
         ${EndIf}
@@ -266,18 +301,21 @@
 
     ${Loop}
 
-    ; TODO: Store -2 for fopen error and -1 for fwrite >= 0 OK
+    ; Check if the logfile was loaded without errors
     ${If} $R2 != ""
       FileClose $R2
       System::Call "*$R0(t, t, i, i, i 1)"
     ${EndIf}
 
+    System::Free $R3
     FileClose $R1
 
-    endBundleLoad:
+    endBundleLoad_${LABEL_ID}:
 
       Push $R0
       System::Store L
+
+      !undef LABEL_ID
 
   !macroend
 

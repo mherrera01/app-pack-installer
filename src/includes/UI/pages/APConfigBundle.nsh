@@ -25,9 +25,8 @@
   ; allowed by NSIS, it is assumed that the value has been truncated.
   StrLen $2 $1
   IntOp $2 $2 + 1  ; Null terminator
-  IntOp $2 $2 * ${NSIS_CHAR_SIZE}  ; 1 for ANSI and 2 for Unicode (UTF-16LE)
   ${If} $2 == ${NSIS_MAX_STRLEN}
-    StrCpy $1 "The URL is too long for NSIS (1024 bytes max)."
+    StrCpy $1 "The URL is too long for NSIS (1023 characters max)."
   ${EndIf}
 
   ; Allocate a buffer to set the JSON item description and URL.
@@ -276,8 +275,9 @@
             ; Disable buttons until the JSON validation is completed
             EnableWindow $caStepButtonCFBP 0
             EnableWindow $trustCustomBundleCheckVBS 0
-            Push 0
-            Call toggleBackNextButtonsCFBP
+            ; TESTS
+            ; Push 0
+            ; Call toggleBackNextButtonsCFBP
 
             ; The JSON validation UI is set to the loading status
             Push 0
