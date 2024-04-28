@@ -10,7 +10,7 @@
   !include "FileFunc.nsh"
   !include "TextFunc.nsh"
   !include "WordFunc.nsh"
-  !include "nsThread.nsh"
+  ; !include "nsThread.nsh"
   !include "nsArray.nsh"
 
   ; User-defined NSH files

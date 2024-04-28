@@ -292,7 +292,7 @@
   ;
   ; * Note: Surrogate pairs are supported (two 16-bit code units),
   ;   such as U+01F309. But some characters may not be displayed
-  ;   in the UI if no font includes them, like U+0104A2.
+  ;   in the UI because no font includes them, like U+0104A2.
   ;
   ; - bFile: The file to convert.
   ; - fileEnc: The encoding of the bundle file (empty for default).
@@ -302,6 +302,7 @@
 
       System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0, i ${inBuf}, i -1, i 0, i 0) i .s"
       Pop "${wCharSize}"
+      ; MessageBox MB_OK "${wCharSize}"
 
       ${If} ${wCharSize} > 0
 
@@ -335,7 +336,7 @@
       System::Store Sr1r0
 
       StrCpy $R0 0  ; The output buffer
-      StrCpy $R1 0  ; No. of 16-bit code units in the buffer (+1 null terminator)
+      StrCpy $R1 0  ; No. of 16-bit code units in the buffer
 
       ; Get the size in bytes of the bundle file
       System::Call "kernel32::GetFileSizeEx(i r0, *l .R2) i .r2"
@@ -352,20 +353,18 @@
 
             ${Case} "${AP_BFILE_ENC_UTF16_BE}"
 
-              /* IntOp $R1 $2 / 2
-              IntOp $R1 $R1 + 2
+              IntOp $R1 $2 / 2
+              IntOp $R1 $R1 + 1
               System::Call "*(&w$R1) i .R0"
 
-              IntOp $R2 $R2 - 1
-              StrCpy $2 0
-
               ; Swap the 2-byte pairs
-              ${ForEach} $2 0 $R2 + 2
+              IntOp $2 $2 - 2
+              ${ForEach} $3 0 $2 + 2
 
-                System::Call "*$R3(&i$2, &i1 .r3, &i1 .r4)"
-                System::Call "*$R0(&i$2, &i1 r4, &i1 r3)"
+                System::Call "*$R3(&i$3, &i1 .r4, &i1 .r5)"
+                System::Call "*$R0(&i$3, &i1 r5, &i1 r4)"
 
-              ${Next} */
+              ${Next}
 
             ${Case} "${AP_BFILE_ENC_UTF8}"
               ${__AP_UTF8_TO_UNICODE} $R3 $R0 $R1
