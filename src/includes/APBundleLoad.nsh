@@ -283,12 +283,13 @@
 
   ;--------------------------------
   ; AP_BFILE_TO_UNICODE
-  ; Convert the bundle file to the UTF-16LE encoding (Unicode for
+  ; Convert the bundle file to the UTF-16LE encoding (Unicode in
   ; Windows). If no character set is specified, then it will be
-  ; assumed that the file is UTF-8 or ANSI (Windows Code Pages).
-  ; In the stack, the output buffer size is returned, which
-  ; corresponds to the number of 16-bit code units including the
-  ; null terminator.
+  ; assumed that the file is UTF-8 or ANSI as a last resort (the
+  ; system code page, usually Windows-1252 for English and most
+  ; European languages). In the stack, the output buffer size is
+  ; returned, which corresponds to the number of 16-bit code units
+  ; including the null terminator.
   ;
   ; * Note: Surrogate pairs are supported (two 16-bit code units),
   ;   such as U+01F309. But some characters may not be displayed
@@ -300,9 +301,9 @@
 
     !macro __AP_MULTIBYTE_TO_WCHAR codePage inBuf outBuf wCharSize
 
-      System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0, i ${inBuf}, i -1, i 0, i 0) i .s"
+      ; MB_ERR_INVALID_CHARS = 0x0008
+      System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0x0008, i ${inBuf}, i -1, i 0, i 0) i .s"
       Pop "${wCharSize}"
-      ; MessageBox MB_OK "${wCharSize}"
 
       ${If} ${wCharSize} > 0
 
@@ -351,6 +352,9 @@
 
           ${Select} $1
 
+            ; Not recommended for files larger than 100KB. The
+            ; conversion is very slow as it iterates the buffer
+            ; in pairs of bytes + the System plugin overhead.
             ${Case} "${AP_BFILE_ENC_UTF16_BE}"
 
               IntOp $R1 $2 / 2
