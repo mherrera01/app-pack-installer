@@ -282,22 +282,23 @@
     !define AP_SKIP_BFILE_BOM "!insertmacro __CALL_AP_SKIP_BFILE_BOM"
 
   ;--------------------------------
-  ; AP_BFILE_TO_UNICODE
-  ; Convert the bundle file to the UTF-16LE encoding (Unicode in
-  ; Windows). If no character set is specified, then it will be
-  ; assumed that the file is UTF-8 or ANSI as a last resort (the
-  ; system code page, usually Windows-1252 for English and most
-  ; European languages). In the stack, the output buffer size is
-  ; returned, which corresponds to the number of 16-bit code units
-  ; including the null terminator.
+  ; AP_BFILE_UTF8_TO_16LE
+  ; Convert the data from the current pointer position [1] of a
+  ; UTF-8 encoded file to UTF-16LE [2] (Unicode in Windows). If the
+  ; conversion fails, then an attempt will be made with the system
+  ; ANSI code page (usually Windows-1252 for English and most
+  ; European languages) as a last resort. In the stack, 1 is
+  ; returned providing that the UTF-16LE file has been successfully
+  ; created and 0 otherwise.
   ;
-  ; * Note: Surrogate pairs are supported (two 16-bit code units),
-  ;   such as U+01F309. But some characters may not be displayed
-  ;   in the UI because no font includes them, like U+0104A2.
+  ; [1] The AP_SKIP_BFILE_BOM macro can be previously used to
+  ;     ignore any possible file BOM during the conversion.
+  ; [2] Surrogate pairs are supported (two 16-bit code units),
+  ;     such as U+01F309. But some characters may not be displayed
+  ;     in the UI because no font includes them, like U+0104A2.
   ;
   ; - bFile: The file to convert.
-  ; - fileEnc: The encoding of the bundle file (empty for default).
-  ; - convBuf [out]: The buffer with the data converted to UTF-16LE.
+  ; - outFname: The name of the UTF-16LE file to create.
 
     !macro __AP_MULTIBYTE_TO_WCHAR codePage inBuf outBuf wCharSize
 
@@ -318,22 +319,21 @@
 
     !macroend
 
-    !define __AP_UTF8_TO_UNICODE "!insertmacro __AP_MULTIBYTE_TO_WCHAR ${AP_BFILE_CP_UTF8}"
-    !define __AP_ANSI_TO_UNICODE "!insertmacro __AP_MULTIBYTE_TO_WCHAR ${AP_BFILE_CP_ACP}"
+    !define __AP_UTF8_TO_16LE "!insertmacro __AP_MULTIBYTE_TO_WCHAR ${AP_BFILE_CP_UTF8}"
+    !define __AP_ANSI_TO_16LE "!insertmacro __AP_MULTIBYTE_TO_WCHAR ${AP_BFILE_CP_ACP}"
 
-    !macro __CALL_AP_BFILE_TO_UNICODE bFile fileEnc convBuf
+    !macro __CALL_AP_BFILE_UTF8_TO_16LE bFile outFname
 
       Push "${bFile}"
-      Push "${fileEnc}"
+      Push "${outFname}"
 
-      ${CallArtificialFunction} __AP_BFILE_TO_UNICODE
-      Pop "${convBuf}"
+      ${CallArtificialFunction} __AP_BFILE_UTF8_TO_16LE
 
     !macroend
 
-    !macro __AP_BFILE_TO_UNICODE
+    !macro __AP_BFILE_UTF8_TO_16LE
 
-      ; fileEnc ($1) and bFile ($0)
+      ; outFname ($1) and bFile ($0)
       System::Store Sr1r0
 
       StrCpy $R0 0  ; The output buffer
@@ -342,56 +342,59 @@
       ; Get the size in bytes of the bundle file
       System::Call "kernel32::GetFileSizeEx(i r0, *l .R2) i .r2"
 
+      ; Conversion to UTF-16LE
       ${If} $2 != 0
       ${AndIf} $R2 L<= ${AP_BFILE_MAX_BYTES}
 
-        System::Call "*(&i$R2, i 0) i .R3"  ; Include null terminator
-        System::Call "kernel32::ReadFile(i r0, i R3, i R2, *i .r2, i 0) i .r3"
+        System::Call "*(&i$R2, i 0) i .r2"  ; Include null terminator
+        System::Call "kernel32::ReadFile(i r0, i r2, i R2, *i .r3, i 0) i .r4"
 
-        ${If} $3 != 0
+        ${If} $4 != 0
 
-          ${Select} $1
-
-            ; Not recommended for files larger than 100KB. The
-            ; conversion is very slow as it iterates the buffer
-            ; in pairs of bytes + the System plugin overhead.
-            ${Case} "${AP_BFILE_ENC_UTF16_BE}"
-
-              IntOp $R1 $2 / 2
-              IntOp $R1 $R1 + 1
-              System::Call "*(&w$R1) i .R0"
-
-              ; Swap the 2-byte pairs
-              IntOp $2 $2 - 2
-              ${ForEach} $3 0 $2 + 2
-
-                System::Call "*$R3(&i$3, &i1 .r4, &i1 .r5)"
-                System::Call "*$R0(&i$3, &i1 r5, &i1 r4)"
-
-              ${Next}
-
-            ${Case} "${AP_BFILE_ENC_UTF8}"
-              ${__AP_UTF8_TO_UNICODE} $R3 $R0 $R1
-
-            ${Case} ""
-              ${__AP_UTF8_TO_UNICODE} $R3 $R0 $R1
-              ${IfThen} $R1 == 0 ${|} ${__AP_ANSI_TO_UNICODE} $R3 $R0 $R1 ${|}
-
-          ${EndSelect}
+          ${__AP_UTF8_TO_16LE} $2 $R0 $R1
+          ${IfThen} $R1 == 0 ${|} ${__AP_ANSI_TO_16LE} $2 $R0 $R1 ${|}
 
         ${EndIf}
 
-        System::Free $R3
+        System::Free $2
 
       ${EndIf}
 
-      Push $R1
-      Push $R0
+      ; Create a file with the data converted to UTF-16LE
+      StrCpy $R3 0  ; Status code
+      ${If} $R0 != 0
+
+        FileOpen $2 $1 w
+        ${IfNot} ${Errors}
+
+          ; UTF-16LE BOM
+          FileWriteByte $2 0xFF
+          FileWriteByte $2 0xFE
+          ClearErrors
+
+          ; 16-bit code units to bytes
+          IntOp $R1 $R1 - 1
+          IntOp $R1 $R1 * 2
+
+          ; Write bytes to the file
+          System::Call "kernel32::WriteFile(i r2, i R0, i R1, *i .r3, i 0) i .r4"
+          ${IfThen} $4 != 0 ${|} StrCpy $R3 1 ${|}
+          FileClose $2
+
+        ${Else}
+          ClearErrors
+        ${EndIf}
+
+        System::Free $R0
+
+      ${EndIf}
+
+      Push $R3
       System::Store L
 
     !macroend
 
-    !define AP_BFILE_TO_UNICODE "!insertmacro __CALL_AP_BFILE_TO_UNICODE"
+    !define AP_BFILE_UTF8_TO_16LE "!insertmacro __CALL_AP_BFILE_UTF8_TO_16LE"
 
   ;--------------------------------
   ; AP_WRITE_BUNDLE_LOG

@@ -57,75 +57,68 @@
     ${EndIf}
 
     ${AP_SKIP_BFILE_BOM} $R1 $5 $6
+    ${Switch} $5
 
-    ; UTF-32 not supported
-    ${If} $5 == "${AP_BFILE_ENC_UTF32_LE}"
-    ${OrIf} $5 == "${AP_BFILE_ENC_UTF32_BE}"
+      ; UTF-32 not supported
+      ${Case} "${AP_BFILE_ENC_UTF32_LE}"
+      ${Case} "${AP_BFILE_ENC_UTF32_BE}"
 
-      System::Call "*$R0(t 'ERROR', t 'The UTF-32 encoding is not supported.')"
-      FileClose $R1
-      Goto endBundleLoad_${LABEL_ID}
+      ; UTF-16BE could be converted to UTF-16LE by swapping
+      ; the 2-byte pairs. However, such operation with the
+      ; System plugin is very slow, even when the bundle file
+      ; is just 100KB.
+      ${Case} "${AP_BFILE_ENC_UTF16_BE}"
 
-    ${EndIf}
-
-    ;--------------------------------
-    ; Conversion to Unicode (UTF-16LE)
-
-      ; Check if the file is already in the correct encoding
-      StrCmp $5 "${AP_BFILE_ENC_UTF16_LE}" createLogFile_${LABEL_ID}
-
-      ; Convert the file to UTF-16LE
-      ${AP_BFILE_TO_UNICODE} $R1 $5 $6
-      Pop $7
-
-      MessageBox MB_OK "BOM: $5 | 16-bit code units: $7"
-      System::Call "*$6(&w$7 .r8)"
-
-      MessageBox MB_OK "$8"
-      IntCmp $6 0 failUnicodeConv_${LABEL_ID}
-
-      ; Create the Unicode file
-      /* FileOpen $8 "$PLUGINSDIR\temp_bfile_unicode.txt" w
-      IfErrors failUnicodeConv_${LABEL_ID}
-
-      ; Write UTF-16LE BOM
-      FileWriteByte $8 0xFF
-      FileWriteByte $8 0xFE
-
-      System::Call "kernel32::WriteFile(i r8, i r6, i r7, *i .r5, i 0) i .r7"
-      ${If} $7 != 0
-      ${OrIf} $5 > 0
-        StrCpy $R0 1
-      ${EndIf} */
-
-      System::Free $6
-      Goto createLogFile_${LABEL_ID}
-
-      failUnicodeConv_${LABEL_ID}:
-
-        System::Free $6
-
-        System::Call "*$R0(t 'ERROR', t 'The bundle file could be loaded as Unicode.')"
+        System::Call "*$R0(t 'ERROR', t 'The $5 encoding is not supported.')"
         FileClose $R1
         Goto endBundleLoad_${LABEL_ID}
 
-    createLogFile_${LABEL_ID}:
+      ${Case} ""  ; UTF-8 by default if no BOM is detected
+        StrCpy $5 "UTF-8 (inferred)"
 
-      ; Create, or overwrite if it already exists, a log to record
-      ; the parser operations
-      FileOpen $R2 $4 w
+      ${Case} "${AP_BFILE_ENC_UTF8}"
 
-      ; Check if the logfile has been created
-      ${IfNot} ${Errors}
+        StrCpy $6 "$PLUGINSDIR\temp_bfile_unicode.txt"
 
-        ; Write UTF-16LE BOM at the beginning of the logfile
-        FileWriteByte $R2 0xFF
-        FileWriteByte $R2 0xFE
+        ; Convert the file to UTF-16LE
+        ${AP_BFILE_UTF8_TO_16LE} $R1 $6
+        Pop $7
+        IntCmp $7 0 failUnicodeConv_${LABEL_ID}
 
-        ${GetFileName} $3 $5
-        ${AP_WRITE_BUNDLE_LOG} $R2 "Loading the bundle file $5..."
+        ; Open the UTF-16LE file in read mode
+        FileOpen $7 $6 r
+        IfErrors failUnicodeConv_${LABEL_ID}
 
-      ${EndIf}
+        ; The new file will be now parsed
+        FileClose $R1
+        StrCpy $R1 $7
+        ${Break}
+
+        failUnicodeConv_${LABEL_ID}:
+
+          System::Call "*$R0(t 'ERROR', t 'The bundle file could not be loaded as Unicode.')"
+          FileClose $R1
+          Goto endBundleLoad_${LABEL_ID}
+
+    ${EndSwitch}
+
+    ; Create, or overwrite if it already exists, a log to record
+    ; the parser operations
+    FileOpen $R2 $4 w
+
+    ; Check if the logfile has been created
+    ${IfNot} ${Errors}
+
+      ; Write UTF-16LE BOM at the beginning of the logfile
+      FileWriteByte $R2 0xFF
+      FileWriteByte $R2 0xFE
+      ClearErrors
+
+      ; Info message with the file name and encoding
+      ${GetFileName} $3 $6
+      ${AP_WRITE_BUNDLE_LOG} $R2 "Encoding: $5 | Loading the bundle file $6..."
+
+    ${EndIf}
 
     ; Clear the arrays
     nsArray::Clear $1
