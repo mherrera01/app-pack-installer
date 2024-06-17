@@ -139,31 +139,23 @@
 
     ${Do}
 
-      ; Read a line in UTF-16LE encoding (Unicode). The string
-      ; is limited to 1023 characters (+1 null terminator).
-      ; TODO: WHEN REACHING THE CHARS LIMIT, IT CONTINUES IN THE SAME LINE
-      FileReadUTF16LE $R1 $3
+      ; Read a line in UTF-16LE encoding (Unicode)
+      ${AP_READ_BFILE_LINE} $R1 $3
+      Pop $4
 
-      ; The error flag is set with EOF (End Of File)
-      ${If} ${Errors}
-
-        StrCpy $4 1
-        ClearErrors
-
-      ${Else}
+      ; Check EOF (End Of File)
+      ${If} $4 == 0
 
         ; Set the current line number
         IntOp $R5 $R5 + 1
 
         ${AP_FORMAT_LINE_READ} "$3" $3
         ${AP_CHECK_LINE_SKIP} $3
-        Pop $4
+        Pop $5
 
-        ${If} $4 == 1
+        ${If} $5 == 1
           ${Continue}
         ${EndIf}
-
-        StrCpy $4 0
 
       ${EndIf}
 

@@ -183,13 +183,13 @@
   ; If none is detected, then the pointer is kept at the
   ; beggining of the file.
   ;
-  ; - fp: The bundle file.
+  ; - bFile: The bundle file handle.
   ; - fileEnc [out]: The encoding detected by the BOM.
   ; - bytesBOM [out]: The number of bytes skipped.
 
-    !macro __CALL_AP_SKIP_BFILE_BOM fp fileEnc bytesBOM
+    !macro __CALL_AP_SKIP_BFILE_BOM bFile fileEnc bytesBOM
 
-      Push "${fp}"
+      Push "${bFile}"
 
       ${CallArtificialFunction} __AP_SKIP_BFILE_BOM
       Pop "${fileEnc}"
@@ -199,7 +199,7 @@
 
     !macro __AP_SKIP_BFILE_BOM
 
-      ; fp ($0)
+      ; bFile ($0)
       System::Store Sr0
 
       ; Read 4 bytes for checking the byte order mark (BOM) 
@@ -297,8 +297,8 @@
   ;     such as U+01F309. But some characters may not be displayed
   ;     in the UI because no font includes them, like U+0104A2.
   ;
-  ; - bFile: The file to convert.
-  ; - outFname: The name of the UTF-16LE file to create.
+  ; - bFile: The file handle to convert.
+  ; - outFname: The path and name of the UTF-16LE file to create.
 
     !macro __AP_MULTIBYTE_TO_WCHAR codePage inBuf outBuf wCharSize
 

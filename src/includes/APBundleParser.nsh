@@ -22,6 +22,92 @@
 !define INT_ACT_TAG ": "
 
 ;--------------------------------
+; AP_READ_BFILE_LINE
+; Read a line, which is until a CR + LF (Windows), LF (Unix)
+; or CR (classic MAC OS) break type is found, from the UTF-16LE
+; file given. The output string is limited to NSIS_MAX_STRLEN
+; (1023 wchar of 16 bits each) (+1 null terminator), ignoring
+; the rest of the line beyond that threshold. In the stack,
+; 1 is returned if the end of file has been reached and 0
+; otherwise.
+;
+; - bFile: The bundle file handle.
+; - lineStr [out]: The line read from the bundle file.
+
+  !macro __CALL_AP_READ_BFILE_LINE bFile lineStr
+
+    Push "${bFile}"
+
+    ${CallArtificialFunction} __AP_READ_BFILE_LINE
+    Pop "${lineStr}"
+
+  !macroend
+
+  !macro __AP_READ_BFILE_LINE
+
+    ; bFile ($0)
+    System::Store Sr0
+
+    ; Read a line in UTF-16LE encoding (Unicode)
+    StrCpy $R0 0
+    FileReadUTF16LE $0 $R1
+
+    ; The error flag is set with EOF (End Of File)
+    IfErrors 0 +2
+    StrCpy $R0 1
+
+    IntOp $R2 ${NSIS_MAX_STRLEN} - 1
+    StrCpy $1 "$R1"
+
+    ${Do}
+
+      StrLen $2 "$1"
+      StrCpy $3 "$1" 1 -1  ; Get last character
+
+      ; Ignore the rest of the line beyond max string length
+      ${If} $2 == $R2
+
+        ${If} $3 == "$\n"
+        ${OrIf} $3 == "$\r"
+
+          ; Read next character
+          FileReadUTF16LE $0 $4 1
+          ClearErrors
+
+          ; Two consecutive line breaks: \n\n or \r\r
+          ${IfThen} $3 == $4 ${|} FileSeek $0 -2 CUR ${|}
+
+          ; Check if a character from the next line was read to rollback
+          ${If} $4 != ""  ; EOF
+          ${AndIf} $4 != "$\n"  ; \r\n (Windows)
+          ${AndIf} $4 != "$\r"  ; \n\r
+            FileSeek $0 -2 CUR  ; TCHAR of 2 bytes
+          ${EndIf}
+
+          ${ExitDo}
+
+        ${EndIf}
+
+        ; Continue reading the line
+        FileReadUTF16LE $0 $1
+        ClearErrors
+
+      ${Else}
+        ${ExitDo}
+
+      ${EndIf}
+
+    ${Loop}
+
+    Push $R0
+    Push $R1
+    System::Store L
+
+  !macroend
+
+  !define AP_READ_BFILE_LINE "!insertmacro __CALL_AP_READ_BFILE_LINE"
+
+;--------------------------------
 ; AP_FORMAT_LINE_READ
 ; Format a line read from the bundle file by removing the
 ; leading spaces/tabs and the trailing new lines.
