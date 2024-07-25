@@ -59,6 +59,10 @@
     IntOp $R2 ${NSIS_MAX_STRLEN} - 1
     StrCpy $1 "$R1"
 
+    ; TODO: Check if the read ended because of a NUL byte.
+    ; PROPOSAL: Return -1 as signal of error and finish
+    ; the parser without handling the event. Maybe FileSeek -2
+    ; and FileReadWord to get 0 for a NUL byte.
     ${Do}
 
       StrLen $2 "$1"

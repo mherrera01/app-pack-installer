@@ -4,6 +4,11 @@
 ;--------------------------------
 ; Bundle Data
 
+  ; TODO [v2.0]: Implement Composite pattern for nested items
+  ; in the bundle file (Indentation will indicate the level)
+  ; https://refactoring.guru/design-patterns/composite
+  ; Linked-list for the array of bundle items
+
   ; Item type: int {0: appGroup, 1: app}
   ; Name: string
   ; Description: string
@@ -164,122 +169,183 @@
 ; Bundle Load Helpers
 
   !define AP_BFILE_MAX_BYTES 10485760  ; 10 MB
+  !define AP_ENC_GUESS_BYTES 512
 
   ; File encodings
-  !define AP_BFILE_ENC_UTF32_LE "UTF-32LE"
-  !define AP_BFILE_ENC_UTF32_BE "UTF-32BE"
-  !define AP_BFILE_ENC_UTF16_LE "UTF-16LE"
-  !define AP_BFILE_ENC_UTF16_BE "UTF-16BE"
-  !define AP_BFILE_ENC_UTF8     "UTF-8"
+  !macro __AP_BFILE_ENC_INFO id name boml bomv
+
+    ; Public
+    !define AP_BFILE_ENC_${id} "${name}"
+
+    ; Private
+    !define __AP_ENC_ID_${id} "${id}"
+    !define __AP_ENC_BOML_${id} "${boml}"
+    !define __AP_ENC_BOMV_${id} "${bomV}"
+
+  !macroend
+
+  !insertmacro __AP_BFILE_ENC_INFO UTF32_LE "UTF-32LE" 4 "25525400"   ; [0xFF, 0xFE, 0x00, 0x00]
+  !insertmacro __AP_BFILE_ENC_INFO UTF32_BE "UTF-32BE" 4 "00254255"   ; [0x00, 0x00, 0xFE, 0xFF]
+  !insertmacro __AP_BFILE_ENC_INFO UTF16_LE "UTF-16LE" 2 "255254"     ; [0xFF, 0xFE]
+  !insertmacro __AP_BFILE_ENC_INFO UTF16_BE "UTF-16BE" 2 "254255"     ; [0xFE, 0xFF]
+  !insertmacro __AP_BFILE_ENC_INFO UTF8     "UTF-8"    3 "239187191"  ; [0xEF, 0xBB, 0xBF]
+
+  ; The bundle file is either binary or uses an unsupported text encoding
+  !define AP_BFILE_ENC_INVALID "Non-text content"
 
   ; Code pages
   !define AP_BFILE_CP_ACP  0
   !define AP_BFILE_CP_UTF8 65001
 
   ;--------------------------------
-  ; AP_SKIP_BFILE_BOM
-  ; Set the file pointer position just behind the BOM of the
-  ; different encodings: UTF-32 LE/BE, UTF-16 LE/BE, UTF-8.
-  ; If none is detected, then the pointer is kept at the
-  ; beggining of the file.
+  ; AP_BFILE_DETECT_ENC
+  ; Check the beginning of the file for byte order marks (BOM)
+  ; associated with the UTF-32 LE/BE, UTF-16 LE/BE and UTF-8
+  ; encodings. In the absence of a BOM, the encoding is inferred
+  ; from NUL byte patterns, if present, which could label the
+  ; bundle file as non-text content (AP_BFILE_ENC_INVALID).
   ;
   ; - bFile: The bundle file handle.
-  ; - fileEnc [out]: The encoding detected by the BOM.
-  ; - bytesBOM [out]: The number of bytes skipped.
+  ; - fileEnc [out]: The name of the encoding detected.
+  ; - bytesBOM [out]: Bytes of the encoding BOM, if any.
 
-    !macro __CALL_AP_SKIP_BFILE_BOM bFile fileEnc bytesBOM
+    !macro __AP_CHECK_BFILE_BOM encId fileBytes outEnc outBoml endCheck
+
+      ${If} "${__AP_ENC_BOMV_${encId}}" == "${fileBytes}"
+
+        StrCpy ${outEnc} "${AP_BFILE_ENC_${encId}}"
+        StrCpy ${outBoml} "${__AP_ENC_BOML_${encId}}"
+        ${endCheck}
+
+      ${EndIf}
+
+    !macroend
+
+    !macro __CALL_AP_BFILE_DETECT_ENC bFile fileEnc bytesBOM
 
       Push "${bFile}"
 
-      ${CallArtificialFunction} __AP_SKIP_BFILE_BOM
+      ${CallArtificialFunction} __AP_BFILE_DETECT_ENC
       Pop "${fileEnc}"
       Pop "${bytesBOM}"
 
     !macroend
 
-    !macro __AP_SKIP_BFILE_BOM
+    !macro __AP_BFILE_DETECT_ENC
 
       ; bFile ($0)
       System::Store Sr0
 
-      ; Read 4 bytes for checking the byte order mark (BOM) 
-      System::Call "*(&i4) i .R0"
-      System::Call "kernel32::ReadFile(i r0, i R0, i 4, *i .R1, i 0) i .r1"
+      ; Read several bytes from the file to detect the encoding
+      FileSeek $0 0 SET
+      System::Call "*(&i${AP_ENC_GUESS_BYTES}) i .R0"
+      System::Call "kernel32::ReadFile(i r0, i R0, i ${AP_ENC_GUESS_BYTES}, *i .R1, i 0) i .r1"
 
-      StrCpy $R2 ""
-      StrCpy $R3 0
+      StrCpy $R2 ""  ; File encoding
+      StrCpy $R3 0   ; Bytes of the BOM, if any
 
       ${If} $1 != 0
+      ${AndIf} $R1 > 1
 
-        ; Detect the file encoding with the BOM
+        ; Get the first 4 bytes
         System::Call "*$R0(b .r1, b .r2, b .r3, b .r4)"
 
-        ${Switch} $R1
+        ; The BOM length is 2-4 bytes
+        StrCpy $5 $R1
+        ${IfThen} $5 > 4 ${|} StrCpy $5 4 ${|}
 
+        ; Check the byte order mark (BOM)
+        ; https://unicode.org/faq/utf_bom.html#BOM
+        ${Switch} $5
+
+          ; UTF-32 (4 bytes)
           ${Case} 4
+            !insertmacro __AP_CHECK_BFILE_BOM ${__AP_ENC_ID_UTF32_LE} "$1$2$3$4" $R2 $R3 '${Break}'
+            !insertmacro __AP_CHECK_BFILE_BOM ${__AP_ENC_ID_UTF32_BE} "$1$2$3$4" $R2 $R3 '${Break}'
 
-            ; UTF-32LE
-            ${If} $1 = 0xFF
-            ${AndIf} $2 = 0xFE
-            ${AndIf} $3 = 0
-            ${AndIf} $4 = 0
-              StrCpy $R2 "${AP_BFILE_ENC_UTF32_LE}"
-              StrCpy $R3 4
-              ${Break}
-
-            ; UTF-32BE
-            ${ElseIf} $1 = 0
-            ${AndIf} $2 = 0
-            ${AndIf} $3 = 0xFE
-            ${AndIf} $4 = 0xFF
-              StrCpy $R2 "${AP_BFILE_ENC_UTF32_BE}"
-              StrCpy $R3 4
-              ${Break}
-            ${EndIf}
-
+          ; UTF-8 (3 bytes)
           ${Case} 3
+            !insertmacro __AP_CHECK_BFILE_BOM ${__AP_ENC_ID_UTF8} "$1$2$3" $R2 $R3 '${Break}'
 
-            ; UTF-8
-            ${If} $1 = 0xEF
-            ${AndIf} $2 = 0xBB
-            ${AndIf} $3 = 0xBF
-              StrCpy $R2 "${AP_BFILE_ENC_UTF8}"
-              StrCpy $R3 3
-              ${Break}
-            ${EndIf}
-
+          ; UTF-16 (2 bytes)
           ${Case} 2
-
-            ; UTF-16LE
-            ${If} $1 = 0xFF
-            ${AndIf} $2 = 0xFE
-              StrCpy $R2 "${AP_BFILE_ENC_UTF16_LE}"
-              StrCpy $R3 2
-              ${Break}
-
-            ; UTF-16BE
-            ${ElseIf} $1 = 0xFE
-            ${AndIf} $2 = 0xFF
-              StrCpy $R2 "${AP_BFILE_ENC_UTF16_BE}"
-              StrCpy $R3 2
-              ${Break}
-            ${EndIf}
+            !insertmacro __AP_CHECK_BFILE_BOM ${__AP_ENC_ID_UTF16_LE} "$1$2" $R2 $R3 '${Break}'
+            !insertmacro __AP_CHECK_BFILE_BOM ${__AP_ENC_ID_UTF16_BE} "$1$2" $R2 $R3 '${Break}'
 
         ${EndSwitch}
 
+        ; Try to detect UTF-16 without BOM
+        ${If} $R2 == ""
+
+          StrCpy $1 0  ; Odd NUL bytes (usually UTF-16LE)
+          StrCpy $2 0  ; Even NUL bytes (usually UTF-16BE)
+
+          IntOp $3 $R1 - 1
+          ${ForEach} $4 0 $3 + 1
+
+            System::Call "*$R0(&i$4, &i1 .r5)"  ; Read one byte
+            ${If} $5 == 0
+
+              ; Check where the NUL bytes are located
+              IntOp $6 $4 % 2
+              ${If} $6 == 0
+                IntOp $2 $2 + 1  ; Even NUL byte (starting at zero)
+              ${Else}
+                IntOp $1 $1 + 1  ; Odd NUL byte
+              ${EndIf}
+
+            ${EndIf}
+
+          ${Next}
+
+          IntOp $3 $1 + $2
+          ${If} $3 > 0
+
+            ; Odd NUL bytes proportion
+            ; A perfect proportion would be, for example:
+            ; > 256 (odd NUL bytes) * 200 = 51200 / 512 (total bytes)
+            ; > 100% of the possible odd bytes are NUL
+            IntOp $1 $1 * 200
+            IntOp $1 $1 / $R1
+
+            ; Even NUL bytes proportion
+            IntOp $2 $2 * 200
+            IntOp $2 $2 / $R1
+
+            ; UTF-16LE (e.g. [0]: 0x48 [1]: 0x00)
+            ${If} $1 > 65     ; > 65% odd NUL bytes
+            ${AndIf} $2 < 15  ; < 15% even NUL bytes
+              StrCpy $R2 "${AP_BFILE_ENC_UTF16_LE}"
+
+            ; UTF-16BE (e.g. [0]: 0x00 [1]: 0x48)
+            ${ElseIf} $1 < 15  ; < 15% odd NUL bytes
+            ${AndIf} $2 > 65   ; > 65% even NUL bytes
+              StrCpy $R2 "${AP_BFILE_ENC_UTF16_BE}"
+
+            ${Else}
+              ; No text encoding was detected and the bundle
+              ; contains NUL bytes
+              StrCpy $R2 "${AP_BFILE_ENC_INVALID}"
+
+            ${EndIf}
+
+          ${EndIf}
+
+        ${EndIf}
+
       ${EndIf}
 
-      FileSeek $0 $R3 SET
+      FileSeek $0 0 SET
       System::Free $R0
 
-      Push $R3
-      Push $R2
+      Push $R3  ; bytesBOM
+      Push $R2  ; fileEnc
 
       System::Store L
 
     !macroend
 
-    !define AP_SKIP_BFILE_BOM "!insertmacro __CALL_AP_SKIP_BFILE_BOM"
+    !define AP_BFILE_DETECT_ENC "!insertmacro __CALL_AP_BFILE_DETECT_ENC"
 
   ;--------------------------------
   ; AP_BFILE_UTF8_TO_16LE
@@ -291,8 +357,8 @@
   ; returned providing that the UTF-16LE file has been successfully
   ; created and 0 otherwise.
   ;
-  ; [1] The AP_SKIP_BFILE_BOM macro can be previously used to
-  ;     ignore any possible file BOM during the conversion.
+  ; [1] The FileSeek instruction can be previously used to ignore
+  ;     any possible file BOM during the conversion.
   ; [2] Surrogate pairs are supported (two 16-bit code units),
   ;     such as U+01F309. But some characters may not be displayed
   ;     in the UI because no font includes them, like U+0104A2.
@@ -429,6 +495,7 @@
         IntFmt $8 "%0.3d" $8
 
         ; Write the message in the logfile
+        StrCpy $1 "$1" 950  ; Limit the input message
         FileWriteUTF16LE $0 "$2-$3-$4 $5:$6:$7.$8 - $1$\n"
 
         ; Error handling

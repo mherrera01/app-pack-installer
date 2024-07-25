@@ -56,8 +56,10 @@
 
     ${EndIf}
 
-    ${AP_SKIP_BFILE_BOM} $R1 $5 $6
+    ${AP_BFILE_DETECT_ENC} $R1 $5 $6
     ${Switch} $5
+
+      ${Case} "${AP_BFILE_ENC_INVALID}"
 
       ; UTF-32 not supported
       ${Case} "${AP_BFILE_ENC_UTF32_LE}"
@@ -69,15 +71,16 @@
       ; is just 100KB.
       ${Case} "${AP_BFILE_ENC_UTF16_BE}"
 
-        System::Call "*$R0(t 'ERROR', t 'The $5 encoding is not supported.')"
+        System::Call "*$R0(t 'ERROR', t 'Unsupported file encoding ($5).')"
         FileClose $R1
         Goto endBundleLoad_${LABEL_ID}
 
-      ${Case} ""  ; UTF-8 by default if no BOM is detected
+      ${Case} ""  ; UTF-8 by default if no encoding is detected
         StrCpy $5 "UTF-8 (inferred)"
 
       ${Case} "${AP_BFILE_ENC_UTF8}"
 
+        FileSeek $R1 $6 SET
         StrCpy $6 "$PLUGINSDIR\temp_bfile_unicode.txt"
 
         ; Convert the file to UTF-16LE
@@ -143,7 +146,7 @@
       ${AP_READ_BFILE_LINE} $R1 $3
       Pop $4
 
-      ; Check EOF (End Of File)
+      ; Check if EOF (End Of File) was not reached
       ${If} $4 == 0
 
         ; Set the current line number
