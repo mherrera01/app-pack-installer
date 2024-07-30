@@ -150,7 +150,6 @@
     ExecWait 'msiexec.exe /i "$PLUGINSDIR\apps\chrome.msi"'
     ${If} ${Errors}
       DetailPrint "Error"
-      ClearErrors
     ${EndIf}
 
   SectionEnd

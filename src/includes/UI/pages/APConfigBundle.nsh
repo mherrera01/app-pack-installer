@@ -8,7 +8,6 @@
   ${If} ${Errors}
     Push "The JSON field '${jsonField}' is missing/misplaced."
     Call updateJsonValidationUIVBS
-    ClearErrors
     Return
   ${EndIf}
 
@@ -664,7 +663,6 @@
           Pop $1
           ${If} ${Errors}
             StrCpy $1 ""
-            ClearErrors
           ${EndIf}
 
           ; Allocate the app group info retrieved from the JSON
@@ -695,7 +693,6 @@
             Pop $1
             ${If} ${Errors}
               StrCpy $1 ""
-              ClearErrors
             ${EndIf}
 
             nsJSON::Get "appGroups" /index $R1 "apps" /index $R3 "setupURL" /end
@@ -752,7 +749,6 @@
         ${If} ${Errors}
           Push "The JSON bundle could not be opened."
           Call updateJsonValidationUIVBS
-          ClearErrors
         ${Else}
           Call setJsonBundlePropVBS
         ${EndIf}
@@ -863,7 +859,6 @@
 
               CopyFiles "$PLUGINSDIR\bundleLoad.log" "$0"
               ${If} ${Errors}
-                ClearErrors
                 MessageBox MB_ICONEXCLAMATION "The logfile could not be exported."
               ${Else}
                 MessageBox MB_OK "Logfile exported successfully."

@@ -250,8 +250,6 @@
         FileOpen $1 $0 r
 
         ${If} ${Errors}
-
-          ClearErrors
           MessageBox MB_ICONEXCLAMATION "The bundle file could not be opened."
 
         ${Else}

@@ -366,10 +366,10 @@
   ; - bFile: The file handle to convert.
   ; - outFname: The path and name of the UTF-16LE file to create.
 
-    !macro __AP_MULTIBYTE_TO_WCHAR codePage inBuf outBuf wCharSize
+    !macro __AP_MULTIBYTE_TO_WCHAR codePage inBuf inBytes outBuf wCharSize
 
       ; MB_ERR_INVALID_CHARS = 0x0008
-      System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0x0008, i ${inBuf}, i -1, i 0, i 0) i .s"
+      System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0x0008, i ${inBuf}, i ${inBytes}, i 0, i 0) i .s"
       Pop "${wCharSize}"
 
       ${If} ${wCharSize} > 0
@@ -379,7 +379,7 @@
         Pop "${outBuf}"
 
         ; Convert the string to UTF-16LE
-        System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0, i ${inBuf}, i -1, i ${outBuf}, i ${wCharSize})"
+        System::Call "kernel32::MultiByteToWideChar(i ${codePage}, i 0, i ${inBuf}, i ${inBytes}, i ${outBuf}, i ${wCharSize})"
 
       ${EndIf}
 
@@ -412,13 +412,18 @@
       ${If} $2 != 0
       ${AndIf} $R2 L<= ${AP_BFILE_MAX_BYTES}
 
-        System::Call "*(&i$R2, i 0) i .r2"  ; Include null terminator
+        System::Call "*(&i$R2, i 0) i .r2"  ; Include null terminator (i 0)
         System::Call "kernel32::ReadFile(i r0, i r2, i R2, *i .r3, i 0) i .r4"
 
         ${If} $4 != 0
 
-          ${__AP_UTF8_TO_16LE} $2 $R0 $R1
-          ${IfThen} $R1 == 0 ${|} ${__AP_ANSI_TO_16LE} $2 $R0 $R1 ${|}
+          ; Size in bytes of the data read, including one null
+          ; character to handle empty files (if cbMultiByte is 0,
+          ; then MultiByteToWideChar fails)
+          IntOp $3 $3 + 1
+
+          ${__AP_UTF8_TO_16LE} $2 $3 $R0 $R1
+          ${IfThen} $R1 == 0 ${|} ${__AP_ANSI_TO_16LE} $2 $3 $R0 $R1 ${|}
 
         ${EndIf}
 
@@ -438,7 +443,7 @@
           FileWriteByte $2 0xFE
           ClearErrors
 
-          ; 16-bit code units to bytes
+          ; 16-bit code units to bytes (removing the null terminator)
           IntOp $R1 $R1 - 1
           IntOp $R1 $R1 * 2
 
@@ -447,8 +452,6 @@
           ${IfThen} $4 != 0 ${|} StrCpy $R3 1 ${|}
           FileClose $2
 
-        ${Else}
-          ClearErrors
         ${EndIf}
 
         System::Free $R0

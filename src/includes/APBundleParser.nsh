@@ -2,15 +2,15 @@
 ; Author: Miguel Herrera
 
 ; States
-!define ST_GEN_PROP 0
-!define ST_NODE_PROP 1
+!define ST_GEN_PROP     0
+!define ST_NODE_PROP    1
 !define ST_SUBNODE_PROP 2
-!define ST_END_ERROR 3
-!define ST_END_OK 4
+!define ST_END_ERROR    3
+!define ST_END_OK       4
 
 ; Event types
 !define EV_INT_ACTIVITY 0
-!define EV_TRANSITION 1
+!define EV_TRANSITION   1
 
 ; Triggers that can cause a transition
 !define TRIG_NODE "> "
@@ -230,64 +230,64 @@
     System::Store Sr2r1r0
 
     ; Event type
-    StrCpy $3 "${EV_TRANSITION}"
+    StrCpy $R0 "${EV_TRANSITION}"
 
     ; End Of File (EOF)
     ${If} $1 == 1
 
       ${If} $0 == ${ST_GEN_PROP}
 
-        StrCpy $4 "There are no elements in the bundle."
-        StrCpy $5 "${ST_END_ERROR}"
+        StrCpy $R1 "There are no elements in the bundle."
+        StrCpy $R2 "${ST_END_ERROR}"
 
       ${Else}
 
-        StrCpy $4 "Bundle loaded successfully."
-        StrCpy $5 "${ST_END_OK}"
+        StrCpy $R1 "Bundle loaded successfully."
+        StrCpy $R2 "${ST_END_OK}"
 
       ${EndIf}
 
     ${Else}
 
       ; Characters that define the trigger
-      StrCpy $6 "$2" ${TRIG_NODE_NCHARS}
-      StrCpy $7 "$2" ${TRIG_SUBNODE_NCHARS}
+      StrCpy $3 "$2" ${TRIG_NODE_NCHARS}
+      StrCpy $4 "$2" ${TRIG_SUBNODE_NCHARS}
 
-      ${If} $6 == "${TRIG_NODE}"
+      ${If} $3 == "${TRIG_NODE}"
 
         ; Get the node name
-        StrCpy $4 "$2" "" ${TRIG_NODE_NCHARS}
-        StrCpy $5 "${ST_NODE_PROP}"
+        StrCpy $R1 "$2" "" ${TRIG_NODE_NCHARS}
+        StrCpy $R2 "${ST_NODE_PROP}"
 
-      ${ElseIf} $7 == "${TRIG_SUBNODE}"
+      ${ElseIf} $4 == "${TRIG_SUBNODE}"
 
         ${If} $0 == ${ST_GEN_PROP}
 
-          StrCpy $4 "Every app must be associated to one group."
-          StrCpy $5 "${ST_END_ERROR}"
+          StrCpy $R1 "Every app must be associated to one group."
+          StrCpy $R2 "${ST_END_ERROR}"
 
         ${Else}
 
           ; Get the sub-node name
-          StrCpy $4 "$2" "" ${TRIG_SUBNODE_NCHARS}
-          StrCpy $5 "${ST_SUBNODE_PROP}"
+          StrCpy $R1 "$2" "" ${TRIG_SUBNODE_NCHARS}
+          StrCpy $R2 "${ST_SUBNODE_PROP}"
 
         ${EndIf}
 
       ${Else}
 
         ; Trigger not found, so there is no transition
-        StrCpy $3 "${EV_INT_ACTIVITY}"
-        StrCpy $4 ""
-        StrCpy $5 "$0"
+        StrCpy $R0 "${EV_INT_ACTIVITY}"
+        StrCpy $R1 ""
+        StrCpy $R2 "$0"
 
       ${EndIf}
 
     ${EndIf}
 
-    Push $3
-    Push $4
-    Push $5
+    Push $R0  ; Event type
+    Push $R1  ; trInfo
+    Push $R2  ; nextState
 
     System::Store L
 
@@ -333,7 +333,6 @@
       Push 0
       Push ""
       Push ""
-      ClearErrors
 
     ${Else}
 

@@ -50,7 +50,6 @@
 
     ${If} ${Errors}
 
-      ClearErrors
       System::Call "*$R0(t 'ERROR', t 'The bundle file could not be opened.')"
       Goto endBundleLoad_${LABEL_ID}
 
