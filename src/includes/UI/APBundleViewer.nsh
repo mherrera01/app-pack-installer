@@ -197,7 +197,8 @@
 
             ; Ignore app if there is no setup URL
             ${If} $8 == ""
-              ${AP_WRITE_BUNDLE_LOG} $R2 "[WARNING] Ignoring app '$7' as it does not have a setup URL"
+              ${AP_WRITE_BUNDLE_LOG} $R2 "[WARNING] Ignoring app '$7' as it \
+                does not have a setup URL"
             ${Else}
 
               nsArray::Set $2 $R3
@@ -241,36 +242,46 @@
 
         ${EndSelect}
 
+        ; Update the current state
+        StrCpy $R6 "$5"
+
       ; Internal activities
       ${ElseIf} $4 == ${EV_INT_ACTIVITY}
 
         ; Get the key-value pair
-        ${AP_INT_ACT_INFO} $3 $7 $8
+        ${AP_INT_ACT_INFO} $3 $5 $6
         Pop $4
 
         ${If} $4 == 1
+
+          StrCpy $7 "Property '$5' with the value: $6"  ; Property retrieved
+          StrCpy $8 0  ; Indicate whether the property is valid or not
 
           ; Within the current state
           ${Select} $R6
 
             ${Case} ${ST_GEN_PROP}
 
-              nsArray::Set $1 /key=$7 $8
-              ${AP_WRITE_BUNDLE_LOG} $R2 "[OK] General property '$7' with the value: $8"
+              ${AP_WRITE_BUNDLE_LOG} $R2 "[INFO] General $7"
+              nsArray::Set $1 /key=$5 $6
 
             ${Case} ${ST_NODE_PROP}
 
-              ${AP_AGRP_SET_PROP} $R3 $7 $8
-              Pop $9
-              ${AP_WRITE_BUNDLE_LOG} $R2 "$9"
+              ${AP_WRITE_BUNDLE_LOG} $R2 "[INFO] App group $7"
+              ${AP_AGRP_SET_PROP} $R3 $5 $6 $8
 
             ${Case} ${ST_SUBNODE_PROP}
 
-              ${AP_APP_SET_PROP} $R3 $7 $8
-              Pop $9
-              ${AP_WRITE_BUNDLE_LOG} $R2 "$9"
+              ${AP_WRITE_BUNDLE_LOG} $R2 "[INFO] App $7"
+              ${AP_APP_SET_PROP} $R3 $5 $6 $8
 
           ${EndSelect}
+
+          ; Warning message if the property was not recognized
+          ${If} $8 == 1
+            ${AP_WRITE_BUNDLE_LOG} $R2 "[WARNING] Ignoring property '$5'. \
+              Key not recognized"
+          ${EndIf}
 
         ${Else}
 
@@ -282,9 +293,6 @@
         ${EndIf}
 
       ${EndIf}
-
-      ; Update the current state
-      StrCpy $R6 "$5"
 
     ${Loop}
 

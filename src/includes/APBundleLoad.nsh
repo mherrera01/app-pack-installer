@@ -9,6 +9,7 @@
   ; https://refactoring.guru/design-patterns/composite
   ; Linked-list for the array of bundle items
 
+  ; BITEM Structure ---------------
   ; Item type: int {0: appGroup, 1: app}
   ; Name: string
   ; Description: string
@@ -18,9 +19,11 @@
     Pop "${outVar}"
   !macroend
 
+  ; AGRP Structure ----------------
   !define AP_BITYPE_AGRP 0
   !define AP_BIDATA_AGRP `!insertmacro __AP_BITEM_DATA ${AP_BITYPE_AGRP} ""`
 
+  ; APP Structure -----------------
   ; Setup URL: string
   !define AP_BITYPE_APP 1
   !define AP_BIDATA_APP `!insertmacro __AP_BITEM_DATA ${AP_BITYPE_APP} "t ''"`
@@ -38,10 +41,15 @@
     !define AP_BITEM_GET_DESC "!insertmacro __AP_BITEM_GET_DATA '(i, t, t .s, i)'"
     !define AP_BITEM_GET_SEL  "!insertmacro __AP_BITEM_GET_DATA '(i, t, t, i .s)'"
 
-    !define AP_APP_GET_URL "!insertmacro __AP_BITEM_GET_DATA '(i, t, t, i, t .s)'"
+    !define AP_APP_GET_URL "!insertmacro __AP_BITEM_GET_DATA '(,,,, t .s)'"
 
     ;--------------------------------
     ; AP_BITEM_GET_INFOTIP
+    ; Get a description of the bundle item, so that it can be
+    ; displayed as a tooltip in any UI element.
+    ;
+    ; - iData: The bundle item data.
+    ; - infoTip [out]: The info about the bundle item.
 
       !macro __CALL_AP_BITEM_GET_INFOTIP iData infoTip
 
@@ -75,67 +83,56 @@
   ;--------------------------------
   ; Setters
 
+    !macro __AP_BITEM_SET_DATA iParam iData value
+
+      !searchreplace __AP_BITEM_SET_PARAM "${iParam}" "?" "${value}"
+      System::Call "*${iData}${__AP_BITEM_SET_PARAM}"
+
+    !macroend
+
+    !define AP_BITEM_SET_NAME `!insertmacro __AP_BITEM_SET_DATA "(i, t '?', t, i)"`
+    !define AP_BITEM_SET_DESC `!insertmacro __AP_BITEM_SET_DATA "(i, t, t '?', i)"`
+    !define AP_BITEM_SET_SEL  `!insertmacro __AP_BITEM_SET_DATA "(i, t, t, i ?)"`
+
+    !define AP_APP_SET_URL `!insertmacro __AP_BITEM_SET_DATA "(,,,, t '?')"`
+
     ;--------------------------------
     ; AP_BITEM_SET_PROP
+    ; Modify the parameters of a bundle item based on the
+    ; different key properties retrieved from the file.
+    ; Keys supported (case insensitively):
+    ; - App group: description
+    ; - App: description, setupURL
 
-      !macro __AP_CHECK_PROP expr prop key setData
-        ${${expr}} "${prop}" == "${key}"
-          System::Call "${setData}"
-      !macroend
-      !define __AP_IF_PROP "!insertmacro __AP_CHECK_PROP If"
-      !define __AP_ELSE_IF_PROP "!insertmacro __AP_CHECK_PROP ElseIf"
-
-      !macro AP_BITEM_SET_PROP iType iData key value
-
-        Push "${iData}"
-        Push "${key}"
-        Push "${value}"
-
-        ${CallArtificialFunction} __AP_${iType}_SET_PROP
-
+      !macro __AP_AGRP_SET_PROP iData value
       !macroend
 
-      !macro __AP_AGRP_SET_PROP
+      !macro __AP_APP_SET_PROP iData value
+        ${Case} "setupURL"
+          ${AP_APP_SET_URL} "${iData}" "${value}"
+      !macroend
 
-        ; value ($2), key ($1) and iData ($0)
-        System::Store Sr2r1r0
+      !macro __AP_BITEM_SET_PROP iType iData key value notValid
 
-        StrCpy $3 "[OK] App group property '$1' with the value: $2"
+        StrCpy ${notValid} 0
 
-        ; App group properties
-        ${__AP_IF_PROP} $1 "groupDesc" "*$0(i, t, t r2, i)"
-        ${Else}
-          StrCpy $3 "[WARNING] Ignoring property '$1'. Only the app group \
-            description can be specified with the groupDesc key"
-        ${EndIf}
+        ${Select} "${key}"
 
-        Push $3
-        System::Store L
+          ; Common item properties
+          ${Case} "description"
+            ${AP_BITEM_SET_DESC} "${iData}" "${value}"
+
+          ; Specific item properties
+          !insertmacro __AP_${iType}_SET_PROP "${iData}" "${value}"
+          ${CaseElse}
+            StrCpy ${notValid} 1
+
+        ${EndSelect}
 
       !macroend
 
-      !macro __AP_APP_SET_PROP
-
-        ; value ($2), key ($1) and iData ($0)
-        System::Store Sr2r1r0
-
-        StrCpy $3 "[OK] App property '$1' with the value: $2"
-
-        ; App properties
-        ${__AP_IF_PROP} $1 "description" "*$0(i, t, t r2, i, t)"
-        ${__AP_ELSE_IF_PROP} $1 "setupURL" "*$0(i, t, t, i, t r2)"
-        ${Else}
-          StrCpy $3 "[WARNING] Ignoring property '$1'. Only the description \
-            and setupURL keys are allowed when defining an app"
-        ${EndIf}
-
-        Push $3
-        System::Store L
-
-      !macroend
-
-      !define AP_AGRP_SET_PROP "!insertmacro AP_BITEM_SET_PROP AGRP"
-      !define AP_APP_SET_PROP "!insertmacro AP_BITEM_SET_PROP APP"
+      !define AP_AGRP_SET_PROP "!insertmacro __AP_BITEM_SET_PROP AGRP"
+      !define AP_APP_SET_PROP  "!insertmacro __AP_BITEM_SET_PROP APP"
 
   ;--------------------------------
   ; AP_FREE_BDATA_ARRAY
@@ -491,7 +488,9 @@
         System::Call "*$R0(&i2 .r2, &i2 .r3, &i2, &i2 .r4, &i2 .r5, &i2 .r6, &i2 .r7, &i2 .r8)"
         System::Free $R0
 
-        ; Format the h:min:s.ms timestamp
+        ; Format the YYYY-MM-DD h:min:s.ms date-timestamp
+        IntFmt $3 "%0.2d" $3
+        IntFmt $4 "%0.2d" $4
         IntFmt $5 "%0.2d" $5
         IntFmt $6 "%0.2d" $6
         IntFmt $7 "%0.2d" $7
