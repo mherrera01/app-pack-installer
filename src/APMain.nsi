@@ -111,24 +111,6 @@
 
   ; Last function called when the installer is closed
   Function .onGuIEnd
-
-    ; The Nscurl plugin must be unloaded so that the NScurl.dll file
-    ; can be removed from the %temp% folder.
-
-    ; Get the NScurl module handle.
-    ; System:Call PROC [(PARAM1, PARAM2, ...) [RETURN]]:
-    ; PROC -> kernel32::GetModuleHandle
-    ; (PARAM1) -> (t 'NScurl.dll') | type = string, source = concrete value
-    ; RETURN -> i .s | type = integer, source = ignored, destination = stack
-    System::Call "kernel32::GetModuleHandle(t 'NScurl.dll') i .s"
-    Pop $0
-
-    ${If} $0 != 0
-      ; Free the NScurl module
-      System::Call "kernel32::FreeLibrary(i $0) i .s"
-      Pop $0
-    ${EndIf}
-
   FunctionEnd
 
 ;--------------------------------

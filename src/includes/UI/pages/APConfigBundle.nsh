@@ -333,6 +333,7 @@
         ; BUG!!! PROBABLY DUE TO THE ASYNC THREAD WHILE DOWNLOADING.
         ; CLICK THE TOOLBAR BUTTONS/THE OUTER DIALOG BEFORE THE
         ; DOWNLOAD FINISHES AND IT CAUSES THE INSTALLER TO CRASH.
+        ; TODO: It does not happen anymore?
 
         ; Download the default bundle and update the UI
         Call httpDefBundleDownloadVBS

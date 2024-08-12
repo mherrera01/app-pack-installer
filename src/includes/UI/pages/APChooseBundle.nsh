@@ -254,7 +254,14 @@
 
         ${Else}
 
-          ; Get the size in bytes of the bundle file
+          ; Get the size in bytes of the bundle file.
+          ; BOOL GetFileSizeEx([in] HANDLE hFile, [out] PLARGE_INTEGER lpFileSize)
+          ;
+          ; System:Call PROC [(PARAM1, PARAM2, ...) [RETURN]]:
+          ; - PROC   -> kernel32::GetFileSizeEx (See the Win32 API docs)
+          ; - PARAM1 -> i r1   | Type = int32, Source = $1
+          ; - PARAM2 -> *l .r2 | Type = Pointer to int64, Source = ignored, Destination = $2
+          ; - RETURN -> i .r3  | Type = int32, Source = ignored, Destination = $3
           System::Call "kernel32::GetFileSizeEx(i r1, *l .r2) i .r3"
 
           ${If} $3 != 0
@@ -266,7 +273,7 @@
             EnableWindow $nextButtonCBP 1
 
           ${Else}
-            MessageBox MB_ICONEXCLAMATION "The bundle file cannot be larger than 10 MB."
+            MessageBox MB_ICONEXCLAMATION "The bundle file cannot be larger than 2 MB."
           ${EndIf}
 
           FileClose $1

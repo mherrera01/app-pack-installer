@@ -99,8 +99,8 @@
     ;--------------------------------
     ; AP_BITEM_SET_PROP
     ; Modify the parameters of a bundle item based on the
-    ; different key properties retrieved from the file.
-    ; Keys supported (case insensitively):
+    ; different key properties retrieved from the file parser.
+    ; Keys currently supported (case insensitively):
     ; - App group: description
     ; - App: description, setupURL
 
@@ -165,7 +165,7 @@
 ;--------------------------------
 ; Bundle Load Helpers
 
-  !define AP_BFILE_MAX_BYTES 10485760  ; 10 MB
+  !define AP_BFILE_MAX_BYTES 2097152  ; 2 MB
   !define AP_ENC_GUESS_BYTES 512
 
   ; File encodings
@@ -482,7 +482,7 @@
 
       ${If} $0 != ""
 
-        ; Get the timestamp
+        ; Get the date-timestamp
         System::Call "*(&i2, &i2, &i2, &i2, &i2, &i2, &i2, &i2) i .R0"
         System::Call "kernel32::GetLocalTime(i R0)"
         System::Call "*$R0(&i2 .r2, &i2 .r3, &i2, &i2 .r4, &i2 .r5, &i2 .r6, &i2 .r7, &i2 .r8)"

@@ -23,11 +23,14 @@ Some additional plugins are required. In order to install them, the simple guide
 [*"How can I install a plugin?"*](https://nsis.sourceforge.io/How_can_I_install_a_plugin)
 from the NSIS page must be followed.
 
-- [NScurl](https://nsis.sourceforge.io/NScurl_plug-in): Downloads safely the required
+- [NScurl](https://nsis.sourceforge.io/NScurl_plug-in)[^1]: Downloads safely the required
 files from the internet with HTTPS.
 - [NsThread](https://nsis.sourceforge.io/NsThread_plug-in): Allows the creation of threads.
 - [NsArray](https://nsis.sourceforge.io/Arrays_in_NSIS#nsArray_plug-in): Enables to
 store and manipulate dynamic sized arrays.
+
+[^1]: Version v24.8.11.112 fixed an [issue](https://github.com/negrutiu/nsis-nscurl/issues/15)
+with the module unload. The `NScurl.dll` file is now correctly removed from the %temp% folder.
 
 ## Remarks
 

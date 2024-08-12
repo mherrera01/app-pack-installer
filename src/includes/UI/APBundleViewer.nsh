@@ -75,7 +75,7 @@
         Goto endBundleLoad_${LABEL_ID}
 
       ${Case} ""  ; UTF-8 by default if no encoding is detected
-        StrCpy $5 "UTF-8 (inferred)"
+        StrCpy $5 "UTF-8 (default)"
 
       ${Case} "${AP_BFILE_ENC_UTF8}"
 
@@ -277,10 +277,10 @@
 
           ${EndSelect}
 
-          ; Warning message if the property was not recognized
+          ; Warning message if the property was ignored
           ${If} $8 == 1
             ${AP_WRITE_BUNDLE_LOG} $R2 "[WARNING] Ignoring property '$5'. \
-              Key not recognized"
+              Key not supported by this section"
           ${EndIf}
 
         ${Else}

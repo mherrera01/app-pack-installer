@@ -55,10 +55,12 @@
 
     !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 
+  ;--------------------------------
   ; Custom pages
-  Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
-  Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
-  Page custom confirmInstPage confirmInstPageLeave /ENABLECANCEL
+
+    Page custom chooseBundlePage chooseBundlePageLeave /ENABLECANCEL
+    Page custom configBundlePage configBundlePageLeave /ENABLECANCEL
+    Page custom confirmInstPage confirmInstPageLeave /ENABLECANCEL
 
   ;--------------------------------
   ; Installation page

@@ -136,7 +136,7 @@
     ; Remove the new lines at the end (\r and \n)
     ${TrimNewLines} "$0" $0
 
-    ; Identation with spaces or tabs is recommended for a more
+    ; Indentation with spaces or tabs is recommended for a more
     ; readable bundle file, but it is not required
     ${Do}
       StrCpy $1 "$0" 1
