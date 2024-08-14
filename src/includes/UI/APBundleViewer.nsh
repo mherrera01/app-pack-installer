@@ -118,7 +118,7 @@
 
       ; Info message with the file name and encoding
       ${GetFileName} $3 $6
-      ${AP_WRITE_BUNDLE_LOG} $R2 "Encoding: $5 | Loading the bundle file $6..."
+      ${AP_WRITE_BUNDLE_LOG} $R2 "Encoding: $5 | Loading the bundle file '$6'..."
 
     ${EndIf}
 
@@ -156,7 +156,16 @@
         Pop $5
 
         ${If} $5 == 1
-          ${Continue}
+          ${Continue}  ; Skip the line
+        ${EndIf}
+
+        ; Get the string length
+        StrLen $5 $3
+        IntOp $5 $5 + 1  ; Null terminator
+
+        ${If} $5 == ${NSIS_MAX_STRLEN}
+          ${AP_WRITE_BUNDLE_LOG} $R2 "[WARNING] Line $R5 truncated. The \
+            string length is limited to 1024 characters."
         ${EndIf}
 
       ${EndIf}

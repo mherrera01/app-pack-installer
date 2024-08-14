@@ -109,7 +109,7 @@
 
   FunctionEnd
 
-  ; Last function called when the installer is closed
+  ; Last function called when the installer closes
   Function .onGuIEnd
   FunctionEnd
 
